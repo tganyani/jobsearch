@@ -1,45 +1,69 @@
 .container {
   display: flex;
   flex-flow: row nowrap;
+  .left{
+    width: calc(100% - 330px);
+  }
   .chatList {
-    width: 200px;
     display: flex;
     flex-flow: column nowrap;
-    height:calc(100vh - 88px);
+    height: calc(100vh - 88px);
     overflow-y: scroll;
     overflow-x: hidden;
     background-color: rgb(242, 242, 242);
     .List {
+      width: 300px;
       display: flex;
       flex-flow: row nowrap;
-      justify-content: space-around;
+      align-items: center;
       text-decoration: none;
+      color: grey;
       background-color: rgb(245, 245, 245);
       padding: 5px;
       overflow: hidden;
-      min-height: 30px;
+      min-height: 50px;
       &:hover {
-        box-shadow: 0 0 1px rgb(164, 164, 164);
+        opacity: 0.6;
       }
-      .text{
-        text-overflow: ellipsis;
-        width: 150px;
+      .text {
+        width: inherit;
+        display: flex;
+        flex-flow: column nowrap;
+        .name {
+          font-weight: 600;
+          font-size: 18px;
+          width: 160px;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+        }
+        .lastMsg {
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          font-size: 14px;
+          width: 160px;
+        }
       }
     }
   }
 }
 
-@media only screen and (max-width: 500px) {
-  .container{
-    .chatList{
+@media only screen and (max-width: 600px) {
+  .container {
+    .chatList {
       width: 100% !important;
-      .List{
-        .text{
-          width: 70% !important;
+      .List {
+        width: 100%;
+        .text {
+          width: calc( 100% - 55px) !important;
+          .lastMsg{
+            width: 70%;
+          }
         }
       }
     }
-    .left{
+    .left {
       display: none !important;
     }
   }

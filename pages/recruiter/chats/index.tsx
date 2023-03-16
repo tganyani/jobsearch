@@ -6,7 +6,9 @@ const RecruiterChats:NextPageWithLayout = ()=>{
     
     return(
             <div>
-                click any candiade to start conversation
+                click any candidate to start conversation.
+                if there are no candidates post a job, so that 
+                candidates can connect and start conversations
             </div>
     )
 }

@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useRouter } from "next/router";
+import { useState, useEffect } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
-import styles from "../../../styles/Vaccancy.module.scss";
+import useSWR from "swr";
+import styles from "@/styles/Vaccancy.module.scss";
 import { TextField, MenuItem, Button } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
 import ClearIcon from "@mui/icons-material/Clear";
-import Alert from '@mui/material/Alert';
-import { useSelector } from "react-redux";
-import { RootState } from "@/store/store";
 import axios from "axios";
 import { baseUrl } from "@/baseUrl";
 import { io } from "socket.io-client";
@@ -29,53 +28,68 @@ interface Skill {
   title: string;
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export default function Vaccancy() {
-  const id = useSelector((state:RootState)=>state.session.id)
-  const [posted, setPosted] = useState<boolean>(false)
+export default function EditVaccancy() {
+  const router = useRouter();
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [skill, setSkill] = useState<string>("");
+  const vaccancyId = router.query.jobId;
 
   const {
     register,
     handleSubmit,
-    watch,
+    reset,
     formState: { errors },
   } = useForm<Inputs>();
+
+  const { data, error } = useSWR(
+    `${baseUrl}/vaccancy/${vaccancyId}`,
+    fetcher
+  );
+
+  useEffect(()=>{
+    reset({
+        city: data?.city,
+        companyName: data?.companyName,
+        country: data?.country,
+        companyWebsite: data?.companyWebsite,
+        title: data?.title,
+        description: data?.description,
+        condition: data?.condition,
+        salary: data?.salary,
+    })
+    setSkills(data?.skills?.data)
+  },[data])
+
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     const submitData = {
       ...data,
-      recruiterId:id,
       skills: {
         data: skills,
       },
     };
-    await axios.post(`${baseUrl}/vaccancy`,submitData)
-    .then(res=>{
-      if(res.data.posted){
-        setPosted(true)
-        setTimeout(()=>{
-          setPosted(false)
-        },6000)
-      }
-    })
-    await socket.emit("newJob")
+    await axios.patch(`${baseUrl}/vaccancy/${vaccancyId}`, submitData).then((res) => {
+    //   alert(res.data?.message);
+    });
+    await socket.emit("newJob");
+    await socket.emit("newJobUpdate")
+    await router.push(`/recruiter/vaccancy/preview/${vaccancyId}`)
   };
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [skill, setSkill] = useState<string>("");
+ 
   const handleChangeSKillInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSkill(e.target.value);
   };
   const handleClickAddBtnm = () => {
     setSkills([...skills, { id: uuidv4(), title: skill }]);
   };
-  
+
+  if (error) return <div>Failed to load</div>;
+  if (!data) return <div>Loading...</div>;
   return (
     <div className={styles.container}>
-      
       <form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
-        <h4>Post a new job</h4>
-        {posted&&<Alert className={styles.alert} severity="success">
-        Job successfully posted
-      </Alert>}
+        <p>Edit <span style={{fontWeight:"600"}}>{data?.title}</span> vaccancy</p>
         <div className={styles.companyName}>
           <TextField
             className={styles.text}
@@ -94,16 +108,16 @@ export default function Vaccancy() {
           />
         </div>
         <div className={styles.errors}>
-        {errors.companyName && (
-          <span style={{ color: "red", width: "100%" }}>
-            This field is required
-          </span>
-        )}
-        {errors.city && (
-          <span style={{ color: "red", width: "100%" }}>
-            This field is required
-          </span>
-        )}
+          {errors.companyName && (
+            <span style={{ color: "red", width: "100%" }}>
+              This field is required
+            </span>
+          )}
+          {errors.city && (
+            <span style={{ color: "red", width: "100%" }}>
+              This field is required
+            </span>
+          )}
         </div>
         <div className={styles.companyAddress}>
           <TextField
@@ -122,16 +136,16 @@ export default function Vaccancy() {
           />
         </div>
         <div className={styles.errors}>
-        {errors.country && (
-          <span style={{ color: "red", width: "100%" }}>
-            This field is required
-          </span>
-        )}
-        {errors.companyWebsite && (
-          <span style={{ color: "red", width: "100%" }}>
-            This field is required
-          </span>
-        )}
+          {errors.country && (
+            <span style={{ color: "red", width: "100%" }}>
+              This field is required
+            </span>
+          )}
+          {errors.companyWebsite && (
+            <span style={{ color: "red", width: "100%" }}>
+              This field is required
+            </span>
+          )}
         </div>
         <div className={styles.title}>
           <TextField
@@ -143,11 +157,11 @@ export default function Vaccancy() {
           />
         </div>
         <div className={styles.errors}>
-        {errors.title && (
-          <span style={{ color: "red", width: "100%" }}>
-            This field is required
-          </span>
-        )}
+          {errors.title && (
+            <span style={{ color: "red", width: "100%" }}>
+              This field is required
+            </span>
+          )}
         </div>
         <div className={styles.description}>
           <TextField
@@ -161,15 +175,15 @@ export default function Vaccancy() {
           />
         </div>
         <div className={styles.errors}>
-        {errors.description && (
-          <span style={{ color: "red", width: "100%" }}>
-            This field is required
-          </span>
-        )}
+          {errors.description && (
+            <span style={{ color: "red", width: "100%" }}>
+              This field is required
+            </span>
+          )}
         </div>
         <div className={styles.skills}>
           <div className={styles.inner}>
-            {skills.map((item: Skill) => (
+            {skills?.map((item: Skill) => (
               <div className={styles.skill} key={item.id}>
                 {item.title}
                 <ClearIcon
@@ -195,8 +209,8 @@ export default function Vaccancy() {
               onClick={handleClickAddBtnm}
               sx={{
                 fontWeight: "300",
-                  boxShadow: 0,
-                  textTransform:"lowercase"
+                boxShadow: 0,
+                textTransform: "lowercase",
               }}
             >
               add
@@ -226,30 +240,30 @@ export default function Vaccancy() {
           </TextField>
         </div>
         <div className={styles.errors}>
-        {errors.salary && (
-          <span style={{ color: "red", width: "100%" }}>
-            This field is required
-          </span>
-        )}
-        {errors.condition && (
-          <span style={{ color: "red", width: "100%" }}>
-            This field is required
-          </span>
-        )}
+          {errors.salary && (
+            <span style={{ color: "red", width: "100%" }}>
+              This field is required
+            </span>
+          )}
+          {errors.condition && (
+            <span style={{ color: "red", width: "100%" }}>
+              This field is required
+            </span>
+          )}
         </div>
         <div className={styles.submitBtn}>
-        <Button
-              variant="contained"
-              className={styles.text}
-              type="submit"
-              sx={{
-                fontWeight: "300",
-                  boxShadow: 0,
-                  textTransform:"lowercase"
-              }}
-            >
-              submit
-            </Button>
+          <Button
+            variant="contained"
+            className={styles.text}
+            type="submit"
+            sx={{
+              fontWeight: "300",
+              boxShadow: 0,
+              textTransform: "lowercase",
+            }}
+          >
+            update 
+          </Button>
         </div>
       </form>
     </div>

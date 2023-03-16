@@ -2,8 +2,8 @@ $backgroundColor1:rgb(246, 246, 246);
 .container{
     display: flex;
     flex-flow: column nowrap;
-    row-gap: 30px;
-    padding: 20px;
+    row-gap: 10px;
+    padding: 10px;
     .header{
         text-align: center;
         span{
@@ -13,17 +13,17 @@ $backgroundColor1:rgb(246, 246, 246);
     .applicants{
         display: flex;
         flex-flow: column nowrap;
-        row-gap: 30px;
+        row-gap: 10px;
         .applicant{
             display: flex;
             flex-flow: column nowrap;
-            row-gap: 10px;
+            row-gap: 5px;
             background-color: $backgroundColor1;
             padding: 10px;
             .name{
                 display: flex;
                 flex-flow: column nowrap; 
-                row-gap: 8px;
+                row-gap: 3px;
                
             }
             .footer{

@@ -120,9 +120,10 @@
         flex: 1;
         .account{
           p{
-            position: absolute;
-            right: 60px;
+            position: relative;
+            right: 0 !important;
             top: 0 !important;
+            text-align: center;
           }
           .dropDown{
             width: 100%;

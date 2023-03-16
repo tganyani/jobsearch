@@ -9,6 +9,33 @@
                 display: flex;
                 flex-flow: row nowrap;
                 align-items: center;
+                column-gap: 20px;
+                .companyName{
+
+                }
+            }
+        }
+        .skills{
+            .skill{
+                display: flex;
+                flex-flow: row wrap;
+                column-gap: 30px;
+                list-style: none;
+                row-gap: 12px;
+                li{
+                    background-color: rgb(249, 249, 249);
+                    padding: 4px;
+                    border-radius: 12px;
+                }
+            }
+        }
+        .companyWebsite{
+            .contacts{
+                display: flex;
+                flex-flow: row wrap;
+                column-gap: 30px;
+                list-style: none;
+                row-gap: 12px;
             }
         }
         .info{
@@ -16,11 +43,19 @@
             flex-flow: row nowrap;
             align-items: center;
             column-gap: 60px;
+            color: grey;
+            font-size: 14px;
             .sub{
                 display: flex;
                 flex-flow: row nowrap;
                 align-items: center;
                 column-gap: 60px;
+                .views,.applicants{
+                    display: flex;
+                    flex-flow: row wrap;
+                    align-items: center;
+                    column-gap: 10px;
+                }
             }
         }
         .footer{

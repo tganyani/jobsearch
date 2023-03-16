@@ -5,7 +5,7 @@ export default function Layout({children}:any){
     return(
        <>
         <NavBar/>
-        <main>{children}</main>
+        <main style={{minHeight:"80vh"}}>{children}</main>
         <Footer/>
        </>
     )

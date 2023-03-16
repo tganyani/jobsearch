@@ -1,39 +1,49 @@
-import { useSelector } from "react-redux";
+import {useState, useEffect} from "react"
 import { useRouter } from "next/router";
 import styles from "@/styles/Job.module.scss";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
-import Button from "@mui/material/Button";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import useSWR from "swr";
+import useSWR,{ useSWRConfig }  from "swr";
 import { baseUrl } from "@/baseUrl";
 import { useDispatch } from "react-redux";
-import JobApply from "@/components/job.apply.modal";
-import { setOpenApply } from "@/store/slice/modalSlice";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import dayjs from "dayjs";
-import { RootState } from "@/store/store";
 import HomeWorkIcon from "@mui/icons-material/HomeWork";
+import Button from "@mui/material/Button";
 
 import relativeTime from "dayjs/plugin/relativeTime"
 dayjs.extend(relativeTime);
+
+import { io } from "socket.io-client";
+
+const socket = io(`${baseUrl}`);
+
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-
-export default function Job() {
-  const id = useSelector((state:RootState)=>state.session.id)
-  const accountType = useSelector((state:RootState)=>state.account.accountType)
+export default function JobPreview(){
+  const { mutate } = useSWRConfig();
   const router = useRouter();
+  const [refreshJobUpdate, setRefreshJobUpdate] = useState()
   const dispatch = useDispatch();
   const { data, error } = useSWR(
-    `${baseUrl}/vaccancy/${router.query.id}`,
+    `${baseUrl}/vaccancy/${router.query.jobId}`,
     fetcher
   );
+
+  useEffect(()=>{
+    socket.on("refreshUpdateJob",(data)=>{
+      setRefreshJobUpdate(data)
+    })
+  },[socket])
+
+  useEffect(()=>{
+    mutate(`${baseUrl}/vaccancy/${router.query.jobId}`)
+  },[refreshJobUpdate])
+
   if (error) return <div>Failed to load</div>;
   if (!data) return <div>Loading...</div>;
-  console.log(data);
-  return (
-    <div className={styles.container}>
+    return(
+        <div className={styles.container}>
       <div className={styles.job}>
         <div className={styles.header}>
           <h4>{data?.title}, ${data.salary}</h4>
@@ -96,36 +106,23 @@ export default function Job() {
             <p><HomeWorkIcon style={{ fontSize: "15px", color: "grey" }} />{data.condition}</p>
           </div>
         </div>
-        <div className={styles.footer}>
-          {accountType==="candidate"&&<Button
-            variant="contained"
-            style={{ height: "25px", textTransform: "lowercase" }}
-            onClick={() => dispatch(setOpenApply())}
-            sx={{
-              fontWeight: "300",
-              boxShadow: 0,
-              textTransform: "lowercase",
-            }}
-            disabled={
-              data?.candidatesApplied
-                .filter((it: any) => Number(it.id) === Number(id))[0]
-                ?.jobsApplied?.filter(
-                  (it: any) => Number(it.id) === Number(router.query.id)
-                ).length
-            }
-          >
-            {data?.candidatesApplied
-                      .filter((it: any) => Number(it.id) === Number(id))[0]
-                      ?.jobsApplied.filter(
-                        (it: any) => Number(it.id) === Number(router.query.id)
-                      ).length
-                      ? "Applied"
-                      : "Apply"}
-          </Button>}
-          {accountType==="candidate"&&<FavoriteBorderIcon />}
+        <div>
+        <Button
+                color="success"
+                sx={{
+                  height: "25px",
+                  textTransform: "lowercase",
+                  fontWeight: "300",
+                  boxShadow: 0,
+                  borderRadius: "12px",
+                }}
+                variant="contained"
+                onClick={()=>router.push(`/recruiter/vaccancy/edit/${router.query.jobId}`)}
+              >
+               edit
+              </Button>
         </div>
       </div>
-      <JobApply jobId={data.id} recruiter={data?.recruiter} />
     </div>
-  );
+    )
 }

@@ -2,7 +2,7 @@
   // height: ;
   display: flex;
   flex-flow: column nowrap;
-  width: calc(100vw - 200px);
+  width: calc(100vw - 350px);
   .chatBox {
     height: calc(100vh - 170px);
     overflow-y: scroll;
@@ -20,6 +20,7 @@
       padding: 2px 8px 2px 8px;
       min-height: 30px;
       overflow-wrap: break-word;
+      box-shadow: 0 0 1px grey;
       .msg {
         font-size: 12px;
       }
@@ -36,6 +37,7 @@
       height: fit-content;
       min-height: 30px;
       padding: 1px 8px 1px 8px;
+      box-shadow: 0 0 1px grey;
       .msg {
         font-size: 12px;
       }
@@ -61,28 +63,42 @@
       outline: none;
       border: 1px solid gainsboro;
       text-align: center;
+      border-radius: 20px;
+      font-weight: 500;
+      font-size: 16px;
     }
-    button {
+    .sendBtn {
       height: 42px;
-      width: 60px;
-      border: 1px solid gainsboro;
+      width: 42px;
+      border-radius: 21px;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      margin-left: 1%;
+      background-color: gainsboro ;
+      :hover{
+        opacity: 0.8;
+      }
+
     }
   }
 }
 
-@media only screen and (max-width: 500px) {
+@media only screen and (max-width: 600px) {
   .main {
     width: 100% !important;
     .chatBox {
+
       .you {
         margin-right: 2%;
         max-width: 78%;
-        font-size: 12px;
+        font-size: 14px;
       }
       .friend {
         margin-left: 2%;
         max-width: 78%;
-        font-size: 12px;
+        font-size: 14px;
       }
     }
   }

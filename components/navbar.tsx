@@ -16,12 +16,19 @@ import { useState } from "react";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
+import { setAccountType } from "@/store/slice/accountSlice";
+import { baseUrl } from "@/baseUrl";
+import { io } from "socket.io-client";
+import Cookies from 'js-cookie'
+
+const socket = io(`${baseUrl}`);
 
 export default function NavBar() {
   const [toggleMenu, setToggleMenu] = useState<boolean>(false);
   const router = useRouter();
   const userEmail = useSelector((state: RootState) => state.session.email);
   const session = useSelector((state: RootState) => state.session.access_token);
+  const id = useSelector((state:RootState)=>state.session.id)
   const accountType = useSelector(
     (state: RootState) => state.account.accountType
   );
@@ -48,7 +55,7 @@ export default function NavBar() {
               <li>
                 <Link
                   href="/candidate/chats"
-                  style={{ textDecoration: "none" }}
+                  style={{ textDecoration: "none" , color: "white"}}
                 >
                   <p>inbox</p>
                 </Link>
@@ -70,7 +77,12 @@ export default function NavBar() {
                 <WorkOutlineIcon />
               </li>
               <li>
-                <p>favourite</p>
+                <Link
+                  href="/candidate/likedJobs"
+                  style={{ textDecoration: "none" , color: "white"}}
+                >
+                  <p>favourite</p>
+                </Link>
                 <FavoriteBorderIcon />
               </li>
               <li>
@@ -102,7 +114,7 @@ export default function NavBar() {
               <li>
                 <Link
                   href="/recruiter/chats"
-                  style={{ textDecoration: "none",color:"white" }}
+                  style={{ textDecoration: "none", color: "white" }}
                 >
                   <p>inbox</p>
                 </Link>
@@ -168,31 +180,67 @@ export default function NavBar() {
                 "aria-labelledby": "basic-button",
               }}
             >
-              <MenuItem onClick={handleClose}>
+              {!session&&<MenuItem onClick={handleClose}>
                 <li
                   onClick={() => {
+                    router.push("/");
+                  }}
+                >
+                  login
+                </li>
+              </MenuItem>}
+              {session&&<div><MenuItem onClick={handleClose}>
+                <li
+                  onClick={() => {
+                    socket.emit("offline",{accountType,id})
                     dispatch(removeSession());
                     router.push("/");
+                    Cookies.remove('user')
                   }}
                 >
                   logout
                 </li>
               </MenuItem>
               <MenuItem onClick={handleClose}>
-                <li>
-                  <Link href="/candidate" style={{ textDecoration: "none" }}>
-                    profile
-                  </Link>
-                </li>
+                {accountType === "candidate" && (
+                  <li>
+                    <Link href="/candidate" style={{ textDecoration: "none" }}>
+                      profile
+                    </Link>
+                  </li>
+                )}
+                {accountType === "recruiter" && (
+                  <li>
+                    <Link href="/recruiter" style={{ textDecoration: "none" }}>
+                      profile
+                    </Link>
+                  </li>
+                )}
               </MenuItem>
               <MenuItem onClick={handleClose}>
                 <li>
                   {" "}
-                  {accountType === "recruiter"
-                    ? "candidate profile"
-                    : "recruiter profile"}
+                  {accountType === "recruiter" ? (
+                    <li onClick={() => dispatch(setAccountType("candidate"))}>
+                      <Link
+                        href="/auth/signin"
+                        style={{ textDecoration: "none" }}
+                      >
+                        candidate profile
+                      </Link>
+                    </li>
+                  ) : (
+                    <li onClick={() => dispatch(setAccountType("recruiter"))}>
+                      <Link
+                        href="/auth/signin"
+                        style={{ textDecoration: "none" }}
+                      >
+                        recruiter profile
+                      </Link>
+                    </li>
+                  )}
                 </li>
-              </MenuItem>
+              </MenuItem></div>}
             </Menu>
           </div>
         </div>
@@ -225,7 +273,12 @@ export default function NavBar() {
               <WorkOutlineIcon />
             </li>
             <li onClick={() => setToggleMenu(false)}>
-              <p>favourite</p>
+              <Link
+                  href="/candidate/likedJobs"
+                  style={{ textDecoration: "none" , color: "white"}}
+                >
+                  <p>favourite</p>
+                </Link>
               <FavoriteBorderIcon />
             </li>
             <li onClick={() => setToggleMenu(false)}>
@@ -255,7 +308,10 @@ export default function NavBar() {
         {accountType === "recruiter" && (
           <ul className={styles.listToggle}>
             <li onClick={() => setToggleMenu(false)}>
-              <Link href="/recruiter/chats" style={{ textDecoration: "none" ,color:"white"}}>
+              <Link
+                href="/recruiter/chats"
+                style={{ textDecoration: "none", color: "white" }}
+              >
                 <p>inbox</p>
               </Link>
               <ChatIcon />

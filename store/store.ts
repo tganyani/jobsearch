@@ -6,12 +6,14 @@ import { combineReducers } from 'redux';
 import { persistReducer } from 'redux-persist'
 import modalReducer from './slice/modalSlice'
 import recruiterModalReducer from './slice/recruiterModalSlice'
+import refreshNewMsgReducer from './slice/refreshNewMsgSlice';
 
 const reducers = combineReducers({
     account: accountReducer,
     session: sessionReducer,
     modal:modalReducer,
     recruiterModal:recruiterModalReducer,
+    refreshNewMsg:refreshNewMsgReducer
   });
 
   const persistConfig = {

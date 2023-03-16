@@ -4,13 +4,15 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 export interface SessionType {
   email: string,
   access_token:string,
-  id:number | null
+  id:number | null,
+  position:string
 }
 
 const initialState:SessionType = {
     email:"",
     access_token:"",
-    id:null
+    id:null,
+    position:"",
 }
 
 export const sessionSlice = createSlice({
@@ -21,14 +23,16 @@ export const sessionSlice = createSlice({
       return{
         email:action.payload.email,
         access_token: action.payload.access_token,
-        id:action.payload.id
+        id:action.payload.id,
+        position:action.payload.position
       }
     },
     removeSession:(state)=>{
         return {
             email:"",
             access_token:"",
-            id:null
+            id:null,
+            position:""
         }
     }
    

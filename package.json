@@ -16,6 +16,7 @@
     "@mui/styled-engine-sc": "^5.11.9",
     "@next/font": "13.1.6",
     "@reduxjs/toolkit": "^1.9.3",
+    "@types/js-cookie": "^3.0.3",
     "@types/node": "18.13.0",
     "@types/react": "18.0.28",
     "@types/react-dom": "18.0.11",
@@ -23,9 +24,13 @@
     "dayjs": "^1.11.7",
     "eslint": "8.34.0",
     "eslint-config-next": "13.1.6",
+    "js-cookie": "^3.0.5",
+    "nanoid": "^4.0.2",
     "next": "13.1.6",
     "next-auth": "^4.19.2",
+    "ra-data-simple-rest": "^4.9.3",
     "react": "18.2.0",
+    "react-admin": "^4.9.3",
     "react-dom": "18.2.0",
     "react-drag-drop-files": "^2.3.9",
     "react-hook-form": "^7.43.1",
@@ -39,6 +44,7 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@types/redux-persist": "^4.3.1"
+    "@types/redux-persist": "^4.3.1",
+    "@types/uuid": "^9.0.1"
   }
 }
