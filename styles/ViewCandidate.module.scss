@@ -1,6 +1,138 @@
+$backgroundColor1: rgb(228, 226, 226);
+$backgroundColor2: #f8f4f4;
+$padding1: 20px;
+$shadow: rgb(121, 116, 116);
+$rowGap1:8px;
+$columGap1:10px;
 .container{
     display: flex;
     flex-flow: column nowrap;
     row-gap: 10px;
     padding: 10px;
+    .name{
+        background-color: $backgroundColor2;
+        padding: $padding1;
+        display: flex;
+        flex-flow: row nowrap;
+        justify-content: space-between;
+        .image{
+            img{
+                width: 100px;
+                height: 100px;
+                border-radius: 50px;
+              }
+              .enlarge{
+                width: 300px;
+                height: 300px;
+                position: absolute;
+                right: 10px;
+                z-index: 4;
+                border-radius: 0;
+              }
+        }
+
+    }
+    .about{
+        background-color: $backgroundColor2;
+        padding: $padding1;
+    }
+    .education{
+        background-color: $backgroundColor2;
+        padding: $padding1;
+        .edu{
+            display: flex;
+            flex-flow: row wrap;
+            justify-content: space-between;
+            list-style: none;
+            column-gap: $columGap1;
+            row-gap: $rowGap1;
+            li{
+                background-color: $backgroundColor1;
+                opacity: 0.4;
+                padding: 8px;
+                border-radius: 8px;
+            }
+        }
+    }
+    .prevPos{
+        background-color: $backgroundColor2;
+        padding: $padding1;
+        .prev{
+            display: flex;
+            flex-flow: row wrap;
+            justify-content: space-between;
+            list-style: none;
+            column-gap: $columGap1;
+            row-gap: $rowGap1;
+            li{
+                background-color: $backgroundColor1;
+                opacity: 0.4;
+                padding: 8px;
+                border-radius: 8px;
+            }
+        }
+    }
+    .projects{
+        background-color: $backgroundColor2;
+        padding: $padding1;
+        .project{
+            display: flex;
+            flex-flow: row wrap;
+            justify-content: space-between;
+            list-style: none;
+            column-gap: $columGap1;
+            row-gap: $rowGap1;
+            li{
+                background-color: $backgroundColor1;
+                opacity: 0.4;
+                padding: 8px;
+                border-radius: 8px;
+                display: flex;
+            flex-flow: row nowrap;
+            justify-content: center;
+            column-gap: $columGap1;
+            }
+        }
+    }
+    .contacts{
+        background-color: $backgroundColor2;
+        padding: $padding1;
+        .sub{
+           display: flex;
+           flex-flow: row wrap;
+           justify-content: space-between; 
+           column-gap: $columGap1;
+            row-gap: $rowGap1;
+        }
+    }
+    .skills{
+        background-color: $backgroundColor2;
+        padding: $padding1;
+        .skill{
+            display: flex;
+            flex-flow: row wrap;
+            justify-content: space-between;
+            list-style: none;
+            column-gap: $columGap1;
+            row-gap: $rowGap1;
+            li{
+                background-color: $backgroundColor1;
+                opacity: 0.4;
+                padding: 8px;
+                border-radius: 8px;
+            }
+        }
+    }
 }
+
+@media only screen and (max-width: 600px) {
+    .container{
+        .image{
+            .enlarge{
+                width: 70vw !important;
+                height: 70vw !important;
+              }
+        }
+    }
+  }
+

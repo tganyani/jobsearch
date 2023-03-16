@@ -1,0 +1,107 @@
+
+.container {
+    margin-top: 10px;
+    .jobs {
+        min-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        padding: 5%;
+        .header {
+        }
+        .jobContainer {
+          .jobCard {
+            margin-bottom: 30px;
+            .cardHeader {
+              display: flex;
+              flex-flow: row nowrap;
+              justify-content: space-between;
+              h4 {
+                // flex: 1;
+                white-space: nowrap;
+                max-width: 150px;
+                text-overflow: ellipsis;
+                overflow: hidden;
+              }
+              .headerIcons {
+                // flex: 1;
+                display: flex;
+                flex-flow: row nowrap;
+                justify-content: space-between;
+                column-gap: 12px;
+                color: grey;
+                .date{
+                  white-space: nowrap;
+                }
+                .icons{
+                  display: flex;
+                    flex-flow: row nowrap;
+                    justify-content: space-around;
+                    column-gap: 10px;
+                    border: 1px solid yellowgreen ;
+                    border-radius: 15px;
+                  .applicants,
+                  .views {
+                    display: flex;
+                    flex-flow: row nowrap;
+                    justify-content: space-around;
+                    border: 1px solid yellowgreen ;
+                    padding-right: 5px;
+                    border-radius: 15px;
+                    font-size: 12px !important;
+                  }
+                }
+                
+              }
+            }
+            .descriptrion{
+              overflow: hidden !important;
+              .desc{
+                max-height: 40px;
+                text-overflow: ellipsis !important;
+                overflow: hidden;
+              }
+              .skills{
+                display: inline-flex;
+                column-gap: 20px;
+                color: grey;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                p{
+                  white-space: nowrap;
+                }
+                li{
+                  font-size: 14px;
+                  white-space: nowrap;
+                  text-overflow: ellipsis;
+                }
+              }
+            }
+            .footer{
+              .sub1{
+                display: flex;
+                flex-flow: row wrap;
+                column-gap: 20px;
+                row-gap: 8px;
+                color: grey;
+                font-size: 14px;
+              }
+              .sub3{
+                .notLiked{
+                  transition: all 1s ease-in-out 0.5s;
+                  &:hover{
+                    font-size: 30px;
+                  }
+                }
+                .liked{
+                  color: red;
+                  transition: all 1s ease-in-out 0.5s;
+                  &:hover{
+                    font-size: 30px;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+}

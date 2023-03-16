@@ -1,11 +1,24 @@
-.contained{
-    padding: 30px;
-    display:  flex;
+.contained {
+  padding: 10px;
+  display: flex;
+  flex-flow: column nowrap;
+  row-gap: 20px;
+  .job {
+    display: flex;
     flex-flow: column nowrap;
-    row-gap: 20px;
-    .job{
-        display:  flex;
-     flex-flow: column nowrap;
-     row-gap: 8px;
+    // row-gap: 5px;
+    box-shadow: 0 0 1px rgb(212, 212, 212);
+    padding: 20px;
+    .header {
+      display: flex;
+      flex-flow: row nowrap;
+      justify-content: space-between;
     }
+    .card {
+      width: 95%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
 }

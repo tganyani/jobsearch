@@ -141,6 +141,15 @@ export default function SignUp() {
         >
           sign up
         </Button>
+        <p>
+          Have an account?
+          <Button
+            style={{ height: "40px", textTransform: "lowercase" }}
+            onClick={() => router.push("/auth/signin")}
+          >
+            login
+          </Button>
+        </p>
       </div>
     </div>
   );

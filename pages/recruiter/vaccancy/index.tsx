@@ -8,7 +8,9 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import axios from "axios";
 import { baseUrl } from "@/baseUrl";
+import { io } from "socket.io-client";
 
+const socket = io(`${baseUrl}`);
 
 type Inputs = {
   city: string;
@@ -46,8 +48,9 @@ export default function Vaccancy() {
     };
     await axios.post(`${baseUrl}/vaccancy`,submitData)
     .then(res=>{
-      console.log(res.data)
+      alert(res.data?.message)
     })
+    await socket.emit("newJob")
   };
   const [skills, setSkills] = useState<Skill[]>([]);
   const [skill, setSkill] = useState<string>("");

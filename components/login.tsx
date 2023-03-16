@@ -10,6 +10,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { setSession } from "@/store/slice/sessionSlice";
 import { RootState } from "@/store/store";
 import { baseUrl } from "@/baseUrl";
+import { io } from "socket.io-client";
+const socket = io(`${baseUrl}`);
 
 type Inputs = {
   email: string;
@@ -30,30 +32,29 @@ export default function Login() {
     formState: { errors },
   } = useForm<Inputs>();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-    await axios
-      .post(`${baseUrl}/${accountType}s/login`, data)
-      .then((res) => {
-        console.log(res.data);
-        if (res.data.logged) {
-          dispatch(
-            setSession({
-              email: res.data.email,
-              access_token: res.data.access_token,
-              id:res.data.id
-            })
-          );
-          router.push("/");
-        }
-        if (!res.data.logged) {
-          setErrorMsg(res.data.message);
-        }
-      });
+    await axios.post(`${baseUrl}/${accountType}s/login`, data).then((res) => {
+      console.log(res.data);
+      if (res.data.logged) {
+        dispatch(
+          setSession({
+            email: res.data.email,
+            access_token: res.data.access_token,
+            id: res.data.id,
+          })
+        );
+        socket.emit("online", { id: res.data.id, accountType });
+        router.push("/");
+      }
+      if (!res.data.logged) {
+        setErrorMsg(res.data.message);
+      }
+    });
   };
 
   return (
     <div className={styles.container}>
       <div className={styles.sub}>
-        <h5 style={{textAlign:"center"}}>logging as a {accountType}</h5>
+        <h5 style={{ textAlign: "center" }}>logging as a {accountType}</h5>
         <p style={{ color: "red" }}>{errorMsg}</p>
         <TextField
           type="text"
@@ -82,6 +83,15 @@ export default function Login() {
         >
           login
         </Button>
+        <p>
+          Don't have account?
+          <Button
+            style={{ height: "40px", textTransform: "lowercase" }}
+            onClick={() => router.push("/auth/signup")}
+          >
+            sign up
+          </Button>
+        </p>
       </div>
     </div>
   );
