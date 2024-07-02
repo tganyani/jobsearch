@@ -2,7 +2,7 @@
   // height: ;
   display: flex;
   flex-flow: column nowrap;
-  width: calc(100vw - 350px);
+  width: calc(100vw - 330px);
   .chatBox {
     height: calc(100vh - 170px);
     overflow-y: scroll;
@@ -55,18 +55,30 @@
     display: flex;
     flex-flow: row nowrap;
     justify-content: center;
-    padding: 10px;
+    // padding: 10px;
+    height: 50px;
     background-color: rgb(242, 242, 242);
-    input {
-      height: 40px;
+    width: 100%;
+    .inputContainer{
       width: 70%;
-      outline: none;
-      border: 1px solid gainsboro;
-      text-align: center;
-      border-radius: 20px;
-      font-weight: 500;
-      font-size: 16px;
+        position: relative;
+        min-height: 42px;
+
+      textarea {
+        margin-right: 10px;
+        width: 95%;
+        outline: none;
+        border: 1px solid gainsboro;
+        padding: 5px;
+        border-radius: 25px;
+        font-weight: 500;
+        font-size: 16px;
+        position: absolute;
+        resize: none;
+        bottom: 0;
+      }
     }
+    
     .sendBtn {
       height: 42px;
       width: 42px;
@@ -101,6 +113,7 @@
         font-size: 14px;
       }
     }
+   
   }
 }
 
@@ -116,5 +129,14 @@
         max-width: 78%;
       }
     }
+    .inputBox {
+      .inputContainer{
+        width: calc(100% - 52px);
+        textarea{
+          margin-right: 5%;
+        }
+      }
+    }
+    
   }
 }

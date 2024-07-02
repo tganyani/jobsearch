@@ -11,20 +11,25 @@ import { useRouter } from "next/router";
 import useSWR, { useSWRConfig } from "swr";
 import { io } from "socket.io-client";
 import { useSelector, useDispatch } from "react-redux";
+import { setSession, removeSession } from "@/store/slice/sessionSlice";
 import { RootState } from "@/store/store";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import DoneIcon from "@mui/icons-material/Done";
-import SendIcon from '@mui/icons-material/Send';
+import SendIcon from "@mui/icons-material/Send";
 
 import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import calendar from "dayjs/plugin/calendar";
+import axios from "axios";
+import { Typography } from "@mui/material";
+
+
 dayjs.extend(calendar);
 
 dayjs.extend(localizedFormat);
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+// const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const socket = io(`${baseUrl}`);
 
 const Chat: NextPageWithLayout = () => {
@@ -41,11 +46,39 @@ const Chat: NextPageWithLayout = () => {
   const [unSendMsg, setUnsendMsg] = useState<{ msg: string; date: string }[]>(
     []
   );
+  const user = useSelector((state: RootState) => state.session);
   const scrollMessage = useRef<null | HTMLDivElement>(null);
   const router = useRouter();
+  // const { data, error } = useSWR(
+  //   `${baseUrl}/rooms/${router.query.roomId}`,
+  //   fetcher
+  // );
+
   const { data, error } = useSWR(
-    `${baseUrl}/rooms/${router.query.roomId}`,
-    fetcher
+    [
+      `${baseUrl}/rooms/${router.query.roomId}`,
+      user.access_token,
+      user.refresh_token,
+    ],
+    async ([url, access_token, refresh_token]) =>
+      await axios
+        .get(url, { headers: { Authorization: "Bearer " + access_token } })
+        .then((res) => res.data)
+        .catch(async (err) => {
+          if (err.request.status === 401) {
+            await axios
+              .post(`${baseUrl}/candidates/refresh`, { refresh_token })
+              .then((res) => {
+                dispatch(
+                  setSession({ ...user, access_token: res.data.access_token })
+                );
+                if (!res.data.valid_access_token) {
+                  dispatch(removeSession());
+                  router.push("/auth/signin");
+                }
+              });
+          }
+        })
   );
 
   useEffect(() => {
@@ -60,15 +93,15 @@ const Chat: NextPageWithLayout = () => {
     socket.on("roomMsg", (data) => {
       setResponse(data);
       setUnsendMsg([]);
-      dispatch(setRefreshMessage(data))
+      dispatch(setRefreshMessage(data));
     });
     socket.on("refreshRead", (data) => {
       setRefreshRead(data);
-      dispatch(setRefreshMessage(data))
+      dispatch(setRefreshMessage(data));
     });
     socket.on("onlineUser", (data) => {
       setRefreshOnline(data);
-      dispatch(setRefreshMessage(data))
+      dispatch(setRefreshMessage(data));
     });
     socket.on("typingUser", (data) => {
       setTyping(true);
@@ -78,7 +111,11 @@ const Chat: NextPageWithLayout = () => {
     });
   }, [socket]);
   useEffect(() => {
-    mutate(`${baseUrl}/rooms/${router.query.roomId}`);
+    mutate([
+      `${baseUrl}/rooms/${router.query.roomId}`,
+      user.access_token,
+      user.refresh_token,
+    ]);
     socket.emit("read", {
       roomName: data?.name,
       roomId: router.query.roomId,
@@ -86,7 +123,11 @@ const Chat: NextPageWithLayout = () => {
     });
   }, [response]);
   useEffect(() => {
-    mutate(`${baseUrl}/rooms/${router.query.roomId}`);
+    mutate([
+      `${baseUrl}/rooms/${router.query.roomId}`,
+      user.access_token,
+      user.refresh_token,
+    ]);
   }, [refreshRead, refreshOnline]);
   useEffect(() => {
     scrollMessage.current?.scrollIntoView({ block: "end", behavior: "smooth" });
@@ -113,14 +154,14 @@ const Chat: NextPageWithLayout = () => {
       {typing}
       <div
         style={{
-          color: "green",
+          // color: "green",
           fontStyle: "italic",
           textAlign: "center",
           fontSize: "14px",
         }}
       >
         {!data.recruiter.online && (
-          <p>
+          <Typography variant="body2" component="div">
             {data.recruiter.firstName},{"  "}last seen{" "}
             {dayjs(data.recruiter.lastSeen).calendar(null, {
               sameDay: "[Today at] h:mm A",
@@ -128,15 +169,17 @@ const Chat: NextPageWithLayout = () => {
               lastWeek: "[Last] dddd",
               sameElse: "DD/MM/YYYY",
             })}
-          </p>
+          </Typography>
         )}
         {data.recruiter.online && (
-          <p style={{ color: "lawngreen" }}>
-            <span style={{ color: "grey" }}>{data.recruiter.firstName}</span>
-            ,{
-              typing?"typing...":"online"
-            }
-          </p>
+          <Typography
+            variant="body2"
+            component="div"
+            style={{ color: "lawngreen" }}
+          >
+            <span style={{ color: "grey" }}>{data.recruiter.firstName}</span>,
+            {typing ? "typing..." : "online"}
+          </Typography>
         )}
       </div>
       <div className={styles.chatBox}>
@@ -155,7 +198,9 @@ const Chat: NextPageWithLayout = () => {
                 item.dateCreated.split("T")[0] ? (
                 " "
               ) : (
-                <p>{dayjs(item.dateCreated).format("LL")} </p>
+                <Typography variant="body2" sx={{fontSize:"12px"}} color="text.secondary" component="div">
+                {dayjs(item.dateCreated).format("LL")}
+              </Typography>
               )}
             </div>
             <div
@@ -163,7 +208,9 @@ const Chat: NextPageWithLayout = () => {
                 item.accountType === accountType ? styles.you : styles.friend
               }
             >
-              <p>{item.message}</p>
+              <Typography variant="body2" color="text.secondary" component="div">
+              {item?.message.split(" ").map((word:string) => word.startsWith("http")?<a style={{marginLeft:"2px",marginRight:"2px"}} href={word}>{word}</a>:(word+ " "))}
+              </Typography>
               <div
                 style={{
                   display: "flex",
@@ -172,7 +219,7 @@ const Chat: NextPageWithLayout = () => {
                 }}
               >
                 {" "}
-                <p style={{ fontSize: "13px", color: "grey" }}>
+                <p style={{ fontSize: "13px", color: "grey",textTransform:"lowercase" }}>
                   {dayjs(item.dateCreated).format("LT")}
                 </p>
                 {item.accountType === accountType && !item.read && (
@@ -209,16 +256,28 @@ const Chat: NextPageWithLayout = () => {
         </div>
       </div>
       <div className={styles.inputBox}>
-        <input
-          type="text"
+      <div className={styles.inputContainer}>
+        <textarea 
           placeholder="type something"
+          rows={message?8:2}
           value={message}
           onChange={(e) =>{ 
             setMessage(e.target.value)
             socket.emit("typing",{roomName: data?.name})
           }}
-        />
-        {message&&<div className={styles.sendBtn}><SendIcon style={{fontSize:"30px", color:"grey"}} onClick={handleSend} /></div>}
+          style={{textAlign:message?"left":"center",fontFamily:"Roboto"}}
+          >
+         
+        </textarea>
+        </div>
+        {message && (
+          <div className={styles.sendBtn}>
+            <SendIcon
+              style={{ fontSize: "30px", color: "grey" }}
+              onClick={handleSend}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,87 +1,114 @@
-.container{
-    .content{
-        display: flex !important;
-        flex-flow: column nowrap;
-        align-items: center;
+.container {
+  .content {
+    display: flex !important;
+    flex-flow: column nowrap;
+    align-items: center;
+    // for the project image modal
+    .imageCancel {
+      width: 20px;
+      height: 20px;
+      border-radius: 20px;
+      background-color: lawngreen;
 
-        .sub{
-            display: flex;
-            flex-flow: row wrap;
-            column-gap: 20px;
-            row-gap: 20px;
-            justify-content: space-around;
-            padding: 20px;
-            .inner{
-                background-color: rgb(228, 226, 226);
-                padding: 10px;
-                border-radius: 5px;
-                position: relative;
-                .cancel{
-                    position: absolute;
-                    top: -10px;
-                    right: -10px;
-                    color: red;
-                    font-size: 18px;
-                }
+      &:hover {
+        width: 25px;
+        height: 25px;
+        background-color: tomato;
+        transition: all 0.2s ease-in 0.005s;
+        
+      }
+    }
+
+    .sub {
+      display: flex;
+      flex-flow: row wrap;
+      column-gap: 20px;
+      row-gap: 20px;
+      justify-content: space-around;
+      padding: 20px;
+      .inner {
+        background-color: rgb(228, 226, 226);
+        padding: 10px;
+        border-radius: 5px;
+        position: relative;
+        .cancel {
+          position: absolute;
+          top: -10px;
+          right: -10px;
+          color: lawngreen;
+          font-size: 18px;
+          border: 2px solid lawngreen;
+          border-radius: 12px;
+          transition: all 0.2s linear 0.05s;
+          &:hover {
+            font-size: 20px;
+            color: tomato;
+            border-color: tomato;
+          }
+        }
+        .cancelLoading {
+          position: absolute;
+          top: -10px;
+          right: -10px;
+        }
+      }
+    }
+    .input {
+      // min-width: 300px;
+    }
+    // for apply modal only
+    .inputAppy {
+      width: 95%;
+    }
+    //
+    .prevLetter {
+      display: flex;
+      flex-flow: column nowrap;
+      justify-content: center;
+      width: 95%;
+      .letter {
+        height: 200px;
+        overflow-y: scroll;
+        display: flex;
+        flex-flow: column nowrap;
+        row-gap: 10px;
+        .card {
+          position: relative;
+          background-color: rgb(240, 240, 240);
+          padding: 14px;
+          width: 95%;
+          &:hover {
+            opacity: 0.7;
+          }
+          .add {
+            position: absolute;
+            top: 0;
+            left: 0;
+            font-size: 14px;
+            transition: all 0.4s ease-in-out 0.1s;
+            &:hover {
+              transform: scale(1.7);
             }
+          }
+          .clear {
+            position: absolute;
+            top: 0;
+            right: 10px;
+            color: tomato;
+            font-size: 14px;
+            transition: all 0.4s ease-in-out 0.1s;
+            &:hover {
+              transform: scale(1.7);
+            }
+          }
         }
-        .input{
-            // min-width: 300px;
-        }
-        // for apply modal only
-        .inputAppy{ 
-            width: 95%;
-        }
-        //
-        .prevLetter{
-            display: flex;
-            flex-flow: column nowrap;
-            justify-content: center;
-            width: 95%;
-            .letter{
-                height: 200px;
-                overflow-y: scroll;
-                display: flex;
-                flex-flow: column nowrap;
-                row-gap: 10px;
-                .card{
-                    position: relative;
-                    background-color:rgb(240, 240, 240);
-                    padding: 14px;
-                    width: 95%;
-                    &:hover{
-                        opacity: 0.7;
-                    }
-                    .add{
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        font-size: 14px;
-                        transition: all 0.4s ease-in-out 0.1s;
-                        &:hover{
-                            transform: scale(1.7);
-                        }
-                    }
-                    .clear{
-                        position: absolute;
-                        top: 0;
-                        right: 10px;
-                        color: tomato;
-                        font-size: 14px;
-                        transition: all 0.4s ease-in-out 0.1s;
-                        &:hover{
-                            transform: scale(1.7);
-                        }
-                    }
-                }
-                }
-                .closeLetter{
-                    display: none;
-                }
-        }
-       
+      }
+      .closeLetter {
+        display: none;
+      }
     }
-    .btn{
-        text-transform: lowercase;
-    }
+  }
+  .btn {
+    text-transform: lowercase;
+  }
 }

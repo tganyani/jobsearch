@@ -4,8 +4,9 @@ import { baseUrl } from "@/baseUrl";
 import { RootState } from "@/store/store";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { useSelector } from "react-redux";
-import useSWR,{ useSWRConfig } from "swr";
+import { useDispatch, useSelector } from "react-redux";
+import useSWR, { useSWRConfig } from "swr";
+import { setSession, removeSession } from "@/store/slice/sessionSlice";
 
 import styles from "../../../styles/AllVaccancy.module.scss";
 
@@ -24,31 +25,81 @@ import Divider from "@mui/material/Divider";
 import ListItemText from "@mui/material/ListItemText";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
 import Avatar from "@mui/material/Avatar";
+import Chip from "@mui/material/Chip";
 import Typography from "@mui/material/Typography";
-import useMediaQuery from '@mui/material/useMediaQuery';
+import useMediaQuery from "@mui/material/useMediaQuery";
+import ArrowOutwardIcon from "@mui/icons-material/ArrowOutward";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import CircularProgress from "@mui/material/CircularProgress";
+
 import axios from "axios";
 
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 type Inputs = {
   position: string;
   country: string;
   city: string;
 };
 
+function stringToColor(string: string) {
+  let hash = 0;
+  let i;
+
+  /* eslint-disable no-bitwise */
+  for (i = 0; i < string.length; i += 1) {
+    hash = string.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  let color = "#";
+
+  for (i = 0; i < 3; i += 1) {
+    const value = (hash >> (i * 8)) & 0xff;
+    color += `00${value.toString(16)}`.slice(-2);
+  }
+  /* eslint-enable no-bitwise */
+
+  return color;
+}
+
 export default function AllVaccancy() {
-  const matches = useMediaQuery('(max-width:700px)');
+  const matches = useMediaQuery("(max-width:700px)");
   const { mutate } = useSWRConfig();
   const router = useRouter();
+  const dispatch = useDispatch();
   const { register, watch, reset } = useForm<Inputs>();
   const [open, setOpen] = useState(false);
   const [jobId, setJobId] = useState<number>();
   const [jobTitle, setJobTitle] = useState<string>();
-  const id = useSelector((state: RootState) => state.session.id);
+  const user = useSelector((state: RootState) => state.session);
   const [Jobs, setJobs] = useState([]);
   const [matchedUsers, setMatchedUsers] = useState([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const { data, error } = useSWR(`${baseUrl}/vaccancy/posted/${id}`, fetcher);
+  const { data, error } = useSWR(
+    [
+      `${baseUrl}/vaccancy/posted/${user.id}`,
+      user.access_token,
+      user.refresh_token,
+    ],
+    async ([url, access_token, refresh_token]) =>
+      await axios
+        .get(url, { headers: { Authorization: "Bearer " + access_token } })
+        .then((res) => res.data)
+        .catch(async (err) => {
+          if (err.request.status === 401) {
+            await axios
+              .post(`${baseUrl}/recruiters/refresh`, { refresh_token })
+              .then((res) => {
+                dispatch(
+                  setSession({ ...user, access_token: res.data.access_token })
+                );
+                if (!res.data.valid_access_token) {
+                  dispatch(removeSession());
+                  router.push("/auth/signin");
+                }
+              });
+          }
+        })
+  );
 
   useEffect(() => {
     setJobs(data?.jobsPosted?.map((item: any) => ({ ...item, open: false })));
@@ -60,10 +111,28 @@ export default function AllVaccancy() {
         .get(
           `${baseUrl}/candidates?country=${watch("country")}&city=${watch(
             "city"
-          )}&position=${watch("position")}`
+          )}&position=${watch("position")}`,
+          { headers: { Authorization: "Bearer " + user.access_token } }
         )
         .then((res) => {
           setMatchedUsers(res.data);
+        })
+        .catch(async (err) => {
+          if (err.request.status === 401) {
+            await axios
+              .post(`${baseUrl}/recruiters/refresh`, {
+                refresh_token: user.refresh_token,
+              })
+              .then((res) => {
+                dispatch(
+                  setSession({ ...user, access_token: res.data.access_token })
+                );
+                if (!res.data.valid_access_token) {
+                  dispatch(removeSession());
+                  router.push("/auth/signin");
+                }
+              });
+          }
         });
     };
     fetchMatchedJobs();
@@ -120,32 +189,78 @@ export default function AllVaccancy() {
     setOpen(false);
   };
 
-  const handleDeleteJob = async ()=>{
-    await axios.delete(`${baseUrl}/vaccancy/${jobId}`)
-    .then(async res=>{
-      await mutate(`${baseUrl}/vaccancy/posted/${id}`)
-      setOpen(false)
-    })
-  }
+  const handleDeleteJob = async () => {
+    await setLoading(true);
+    await axios
+      .delete(`${baseUrl}/vaccancy/${jobId}`, {
+        headers: { Authorization: "Bearer " + user.access_token },
+      })
+      .then(async (res) => {
+        await mutate([
+          `${baseUrl}/vaccancy/posted/${user.id}`,
+          user.access_token,
+          user.refresh_token,
+        ]);
+        setOpen(false);
+      })
+      .catch(async (err) => {
+        if (err.request.status === 401) {
+          await axios
+            .post(`${baseUrl}/recruiters/refresh`, {
+              refresh_token: user.refresh_token,
+            })
+            .then((res) => {
+              dispatch(
+                setSession({ ...user, access_token: res.data.access_token })
+              );
+              if (!res.data.valid_access_token) {
+                dispatch(removeSession());
+                router.push("/auth/signin");
+              }
+            });
+        }
+      });
+    await setLoading(false);
+  };
 
   if (error) return <div>Failed to load</div>;
   if (!data) return <div>Loading...</div>;
   return (
     <div className={styles.container}>
+      <Typography variant="h6" component="div">
+        All vaccancies posted
+      </Typography>
       {Jobs?.map((item: any) => (
         <div className={styles.vaccancy} key={item.id}>
           <div className={styles.header}>
-            <Link href={`/recruiter/vaccancy/preview/${item.id}`}>
-              <h4>{item.title}</h4>
-            </Link>
+            <Typography variant="body1" component="div" className={styles.h4}>
+              {item.title}
+            </Typography>
             <div className={styles.searchCandidate}>
-              <div
-                className={styles.searchIcon}
+              <Chip
+                label="potential candidates"
+                component="a"
+                variant="outlined"
+                clickable
                 onClick={() => handleClickOpen(Number(item.id))}
+                sx={{
+                  width: "170px",
+                  display: "flex",
+                  flexFlow: "row nowrap",
+                  justifyContent: "space-between",
+                  "&:hover": { color: "lawngreen", borderColor: "lawngreen" },
+                }}
+                avatar={
+                  <Avatar sx={{ backgroundColor: "lawngreen" }}>
+                    <SearchIcon sx={{ color: "white" }} />
+                  </Avatar>
+                }
+              />
+              <Dialog
+                fullScreen={matches}
+                open={item.open}
+                onClose={handleClose}
               >
-                <SearchIcon /> <p>potential candidates</p>
-              </div>
-              <Dialog fullScreen={matches} open={item.open} onClose={handleClose}>
                 <DialogTitle>Search for potential candidates</DialogTitle>
                 <DialogContent>
                   <DialogContentText>
@@ -200,19 +315,21 @@ export default function AllVaccancy() {
                       <ListItem alignItems="flex-start">
                         <ListItemAvatar>
                           <Avatar
-                            alt={user.firstName}
+                            alt={user.firstName?.toUpperCase()}
                             src={`${baseUrl}${user.image}`}
+                            sx={{ bgcolor: stringToColor(user.firstName) }}
                           />
                         </ListItemAvatar>
                         <ListItemText
                           primary={user.firstName}
+                          sx={{ textTransform: "capitalize" }}
                           secondary={
                             <Fragment>
                               <Typography
                                 sx={{ display: "inline" }}
                                 component="span"
                                 variant="body2"
-                                color="text.primary"
+                                color="text.secondary"
                               >
                                 {user.position},
                               </Typography>
@@ -226,15 +343,16 @@ export default function AllVaccancy() {
                   ))}
                 </DialogContent>
                 <DialogActions>
-                  <Button onClick={() => handleClose(Number(item.id))}
-                  variant="contained"
-                  sx={{
-                    height: "25px",
-                    textTransform: "lowercase",
-                    fontWeight: "300",
-                    boxShadow: 0,
-                    borderRadius: "12px",
-                  }}
+                  <Button
+                    onClick={() => handleClose(Number(item.id))}
+                    variant="contained"
+                    sx={{
+                      height: "25px",
+                      textTransform: "lowercase",
+                      fontWeight: "300",
+                      boxShadow: 0,
+                      borderRadius: "12px",
+                    }}
                   >
                     close
                   </Button>
@@ -242,32 +360,90 @@ export default function AllVaccancy() {
               </Dialog>
             </div>
           </div>
-          <div className={styles.description}>{item.description}</div>
+          <Typography
+            variant="body2"
+            component="div"
+            className={styles.description}
+            color="GrayText"
+          >
+            {item.description}
+          </Typography>
+          <Button
+            sx={{
+              fontWeight: "300",
+              boxShadow: 0,
+              textTransform: "lowercase",
+              padding: "1px",
+              color: "lawngreen",
+              width: "100px",
+            }}
+            onClick={() =>
+              router.push(`/recruiter/vaccancy/preview/${item.id}`)
+            }
+          >
+            read more ...
+          </Button>
           <div className={styles.bottom}>
             <div className={styles.clm1}>
-              <p>{item.candidatesApplied.length} candidates applied </p>
-              <Link href={`/recruiter/vaccancy/${item.id}`}>
-                view candidates
-              </Link>
+              <Chip
+                avatar={
+                  <Avatar sx={{ backgroundColor: "lawngreen" }}>
+                    <Typography
+                      variant="body2"
+                      component="div"
+                      sx={{ color: "white" }}
+                    >
+                      {item.candidatesApplied.length}
+                    </Typography>
+                  </Avatar>
+                }
+                label="candidates applied"
+                variant="outlined"
+                sx={{ width: "160px" }}
+              />
+              {item.candidatesApplied.length > 0 && (
+                <Chip
+                  label="view candidates"
+                  component="a"
+                  variant="outlined"
+                  clickable
+                  onClick={() => router.push(`/recruiter/vaccancy/${item.id}`)}
+                  sx={{
+                    width: "160px",
+                    display: "flex",
+                    flexFlow: "row nowrap",
+                    justifyContent: "space-between",
+                    "&:hover": { color: "lawngreen", borderColor: "lawngreen" },
+                  }}
+                  avatar={
+                    <Avatar sx={{ backgroundColor: "lawngreen" }}>
+                      <ArrowOutwardIcon sx={{ color: "white" }} />
+                    </Avatar>
+                  }
+                />
+              )}
             </div>
-            <Button
-              color="error"
-              className={styles.clm2}
-              sx={{
-                height: "25px",
-                textTransform: "lowercase",
-                fontWeight: "300",
-                boxShadow: 0,
-                borderRadius: "12px",
-                width:"170px"
-              }}
-              variant="contained"
+            <Chip
+              label="delete vaccancy"
+              component="a"
+              variant="outlined"
+              clickable
               onClick={() =>
                 handleClickOpenDeleteModal(Number(item.id), item.title)
               }
-            >
-              delete vaccancy
-            </Button>
+              sx={{
+                width: "170px",
+                display: "flex",
+                flexFlow: "row nowrap",
+                justifyContent: "space-between",
+                "&:hover": { color: "tomato", borderColor: "tomato" },
+              }}
+              avatar={
+                <Avatar sx={{ backgroundColor: "tomato" }}>
+                  <DeleteOutlineIcon sx={{ color: "white" }} />
+                </Avatar>
+              }
+            />
           </div>
         </div>
       ))}
@@ -311,7 +487,11 @@ export default function AllVaccancy() {
               borderRadius: "12px",
             }}
           >
-            delete
+            {loading ? (
+              <CircularProgress sx={{ color: "white" }} size="20px" />
+            ) : (
+              "delete"
+            )}
           </Button>
         </DialogActions>
       </Dialog>

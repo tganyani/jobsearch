@@ -11,16 +11,27 @@
         .jobContainer {
           .jobCard {
             margin-bottom: 30px;
+            border: 1px solid #f8f4f4;
+            padding: 10px;
+            border-radius: 12px;
+           
+            &:hover{
+             border-width: 2px; 
+            }
             .cardHeader {
               display: flex;
               flex-flow: row nowrap;
               justify-content: space-between;
-              h4 {
+              .jobTitle{
                 // flex: 1;
                 white-space: nowrap;
                 max-width: 150px;
                 text-overflow: ellipsis;
                 overflow: hidden;
+                
+              }
+              .date{
+                white-space: nowrap;
               }
               .headerIcons {
                 // flex: 1;
@@ -28,26 +39,28 @@
                 flex-flow: row nowrap;
                 justify-content: space-between;
                 column-gap: 12px;
-                color: grey;
-                .date{
-                  white-space: nowrap;
-                }
+                // color: grey;
+                
                 .icons{
                   display: flex;
                     flex-flow: row nowrap;
                     justify-content: space-around;
                     column-gap: 10px;
-                    border: 1px solid yellowgreen ;
+                    border: 2px solid lawngreen ;
                     border-radius: 15px;
                   .applicants,
                   .views {
                     display: flex;
                     flex-flow: row nowrap;
                     justify-content: space-around;
-                    border: 1px solid yellowgreen ;
+                    border: 1px solid lawngreen ;
                     padding-right: 5px;
                     border-radius: 15px;
                     font-size: 12px !important;
+                align-items: center;
+                padding-left: 4px;
+                padding-left: 4px;
+    
                   }
                 }
                 
@@ -56,21 +69,24 @@
             .descriptrion{
               overflow: hidden !important;
               .desc{
-                max-height: 40px;
-                text-overflow: ellipsis !important;
-                overflow: hidden;
+                display: -webkit-box; 
+                -webkit-box-orient: vertical; 
+                -webkit-line-clamp: 2; 
+                overflow: hidden; 
+                text-overflow: ellipsis; 
               }
               .skills{
-                display: inline-flex;
+                display: flex;
+                flex-flow: row nowrap;
                 column-gap: 20px;
                 color: grey;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                p{
+                .skillsH{
                   white-space: nowrap;
                 }
-                li{
-                  font-size: 14px;
+                .skillsV{
+                  font-size: 12px;
                   white-space: nowrap;
                   text-overflow: ellipsis;
                 }
@@ -83,17 +99,16 @@
                 column-gap: 20px;
                 row-gap: 8px;
                 color: grey;
-                font-size: 14px;
+                .address,.jobcondition{
+                  display: flex;
+                  flex-flow: row nowrap;
+                  justify-content: space-between;
+                  align-items: center;
+                }
               }
               .sub3{
-                .notLiked{
-                  transition: all 1s ease-in-out 0.5s;
-                  &:hover{
-                    font-size: 30px;
-                  }
-                }
                 .liked{
-                  color: red;
+                  color: lawngreen;
                   transition: all 1s ease-in-out 0.5s;
                   &:hover{
                     font-size: 30px;

@@ -1,4 +1,7 @@
 *{
     margin: 0 ;
     padding: 0;
+    scrollbar-color: #eeeeee #fff;
+    scrollbar-width: thin;
+    scroll-behavior:smooth;
 }

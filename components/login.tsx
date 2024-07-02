@@ -44,11 +44,18 @@ export default function Login() {
             email: res.data.email,
             access_token: res.data.access_token,
             id: res.data.id,
-            position:res.data.position
+            position:res.data.position,
+            refresh_token:res.data.refresh_token
           })
         );
         socket.emit("online", { id: res.data.id, accountType });
-        router.push("/");
+        // redirecting depending on the account type
+        if(accountType === "candidate"){
+          router.push("/");
+        }
+        else{
+          router.push("/recruiter/vaccancy/allVaccancies");
+        }
       }
       if (!res.data.logged) {
         setErrorMsg(res.data.message);

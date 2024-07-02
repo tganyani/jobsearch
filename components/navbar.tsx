@@ -19,7 +19,8 @@ import Button from "@mui/material/Button";
 import { setAccountType } from "@/store/slice/accountSlice";
 import { baseUrl } from "@/baseUrl";
 import { io } from "socket.io-client";
-import Cookies from 'js-cookie'
+import Cookies from "js-cookie";
+import { Typography } from "@mui/material";
 
 const socket = io(`${baseUrl}`);
 
@@ -28,7 +29,7 @@ export default function NavBar() {
   const router = useRouter();
   const userEmail = useSelector((state: RootState) => state.session.email);
   const session = useSelector((state: RootState) => state.session.access_token);
-  const id = useSelector((state:RootState)=>state.session.id)
+  const id = useSelector((state: RootState) => state.session.id);
   const accountType = useSelector(
     (state: RootState) => state.account.accountType
   );
@@ -41,146 +42,286 @@ export default function NavBar() {
   const handleClose = () => {
     setAnchorEl(null);
   };
+  const iconsStyle = {
+    fontSize: "14px",
+  };
 
   return (
-    <div className={styles.main}>
-      <div className={styles.container}>
-        <div className={styles.logo}>Imisebenzi</div>
-        <div className={styles.menu}>
-          <MenuIcon onClick={() => setToggleMenu(!toggleMenu)} />
-        </div>
-        <div className={styles.navLists}>
-          {accountType === "candidate" && (
-            <ul className={styles.list}>
-              <li>
-                <Link
-                  href="/candidate/chats"
-                  style={{ textDecoration: "none" , color: "white"}}
-                >
-                  <p>inbox</p>
-                </Link>
-                <ChatIcon />
-              </li>
-              <li>
-                <p>notifications</p>
-                <NotificationsNoneIcon />
-              </li>
-              <li>
-                <p>
-                  <Link
-                    href="/"
-                    style={{ textDecoration: "none", color: "white" }}
+    <div className={styles.container}>
+      <Typography variant="body1" component="div" className={styles.logo}>
+        Imisebenzi
+      </Typography>
+      <div className={styles.menu}>
+        <MenuIcon onClick={() => setToggleMenu(!toggleMenu)} />
+      </div>
+      <div className={styles.navLists}>
+        {accountType === "candidate" && (
+          <ul className={toggleMenu ? styles.openMenu : styles.list}>
+            <li>
+              <Link
+                href="/candidate/chats"
+                style={{ textDecoration: "none", color: "white" }}
+                className={styles.link}
+              >
+                <div className={styles.pContainer}>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    className={styles.p}
+                  >
+                    inbox
+                  </Typography>
+                </div>
+
+                <div className={styles.iconContainer}>
+                  <ChatIcon sx={iconsStyle} className={styles.icon} />
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/"
+                className={styles.link}
+                style={{ textDecoration: "none", color: "white" }}
+              >
+                <div className={styles.pContainer}>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    className={styles.p}
+                  >
+                    notifications
+                  </Typography>
+                </div>
+                <div className={styles.iconContainer}>
+                  <NotificationsNoneIcon
+                    sx={iconsStyle}
+                    className={styles.icon}
+                  />
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/"
+                style={{ textDecoration: "none", color: "white" }}
+                className={styles.link}
+              >
+                <div className={styles.pContainer}>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    className={styles.p}
                   >
                     jobs
-                  </Link>
-                </p>
-                <WorkOutlineIcon />
-              </li>
-              <li>
-                <Link
-                  href="/candidate/likedJobs"
-                  style={{ textDecoration: "none" , color: "white"}}
-                >
-                  <p>favourite</p>
-                </Link>
-                <FavoriteBorderIcon />
-              </li>
-              <li>
-                <p>
-                  <Link
-                    href="/candidate/appliedJobs"
-                    style={{ textDecoration: "none", color: "white" }}
+                  </Typography>
+                </div>
+                <div className={styles.iconContainer}>
+                  <WorkOutlineIcon sx={iconsStyle} className={styles.icon} />
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/candidate/likedJobs"
+                className={styles.link}
+                style={{ textDecoration: "none", color: "white" }}
+              >
+                <div className={styles.pContainer}>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    className={styles.p}
+                  >
+                    favourite
+                  </Typography>
+                </div>
+                <div className={styles.iconContainer}>
+                  <FavoriteBorderIcon sx={iconsStyle} className={styles.icon} />
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/candidate/appliedJobs"
+                className={styles.link}
+                style={{ textDecoration: "none", color: "white" }}
+              >
+                <div className={styles.pContainer}>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    className={styles.p}
                   >
                     applied
-                  </Link>
-                </p>
-              </li>
-              {!session && (
-                <li>
-                  <p>
-                    <Link
-                      href="/auth/signup"
-                      style={{ textDecoration: "none", color: "white" }}
-                    >
-                      signup
-                    </Link>
-                  </p>
-                </li>
-              )}
-            </ul>
-          )}
-          {accountType === "recruiter" && (
-            <ul className={styles.list}>
+                  </Typography>
+                </div>
+                <div className={styles.iconContainer}></div>
+              </Link>
+            </li>
+            {!session && (
               <li>
                 <Link
-                  href="/recruiter/chats"
+                  href="/auth/signup"
                   style={{ textDecoration: "none", color: "white" }}
+                  className={styles.link}
                 >
-                  <p>inbox</p>
-                </Link>
-                <ChatIcon />
-              </li>
-              <li>
-                <p>notifications</p>
-                <NotificationsNoneIcon />
-              </li>
-              <li>
-                <p>
-                  <Link
-                    href="/recruiter/vaccancy/allVaccancies"
-                    style={{ textDecoration: "none", color: "white" }}
-                  >
-                    vaccanciesPosted
-                  </Link>
-                </p>
-              </li>
-              <li>
-                <p>
-                  <Link
-                    href="/recruiter/vaccancy"
-                    style={{ textDecoration: "none", color: "white" }}
-                  >
-                    post job
-                  </Link>
-                </p>
-              </li>
-              {!session && (
-                <li>
-                  <p>
-                    <Link
-                      href="/auth/signup"
-                      style={{ textDecoration: "none", color: "white" }}
+                  <div className={styles.pContainer}>
+                    <Typography
+                      variant="body2"
+                      component="div"
+                      className={styles.p}
                     >
                       signup
-                    </Link>
-                  </p>
-                </li>
-              )}
-            </ul>
-          )}
-          <div className={styles.account}>
-            <p style={{ color: "lawngreen" }}>{userEmail}</p>
-            <div className={styles.dropDown}>
-              <Button
-                id="basic-button"
-                aria-controls={open ? "basic-menu" : undefined}
-                aria-haspopup="true"
-                aria-expanded={open ? "true" : undefined}
-                onClick={handleClick}
+                    </Typography>
+                  </div>
+                  <div className={styles.iconContainer}></div>
+                </Link>
+              </li>
+            )}
+          </ul>
+        )}
+        {accountType === "recruiter" && (
+          <ul className={toggleMenu ? styles.openMenu : styles.list}>
+            <li>
+              <Link
+                href="/recruiter/chats"
+                style={{ textDecoration: "none", color: "white" }}
+                className={styles.link}
               >
-                <AccountCircleIcon id={styles.accountIcon} />
-              </Button>
-            </div>
-            <Menu
-              id="basic-menu"
-              anchorEl={anchorEl}
-              open={open}
-              onClose={handleClose}
-              MenuListProps={{
-                "aria-labelledby": "basic-button",
-              }}
+                <div className={styles.pContainer}>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    className={styles.p}
+                  >
+                    inbox
+                  </Typography>
+                </div>
+                <div className={styles.iconContainer}>
+                  <ChatIcon sx={iconsStyle} className={styles.icon} />
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/recruiter/vaccancy/allVaccancies"
+                style={{ textDecoration: "none", color: "white" }}
+                className={styles.link}
+              >
+                <div className={styles.pContainer}>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    className={styles.p}
+                  >
+                    notifications
+                  </Typography>
+                </div>
+                <div className={styles.iconContainer}>
+                  <NotificationsNoneIcon
+                    sx={iconsStyle}
+                    className={styles.icon}
+                  />
+                </div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/recruiter/vaccancy/allVaccancies"
+                style={{ textDecoration: "none", color: "white" }}
+                className={styles.link}
+              >
+                <div className={styles.pContainer}>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    className={styles.p}
+                  >
+                    vaccanciesPosted
+                  </Typography>
+                </div>
+                <div className={styles.iconContainer}></div>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/recruiter/vaccancy"
+                style={{ textDecoration: "none", color: "white" }}
+                className={styles.link}
+              >
+                <div className={styles.pContainer}>
+                  <Typography
+                    variant="body2"
+                    component="div"
+                    className={styles.p}
+                  >
+                    post job
+                  </Typography>
+                </div>
+                <div className={styles.iconContainer}></div>
+              </Link>
+            </li>
+            {!session && (
+              <li>
+                <p>
+                  <Link
+                    href="/auth/signup"
+                    style={{ textDecoration: "none", color: "white" }}
+                    className={styles.link}
+                  >
+                    <div className={styles.pContainer}>
+                      <Typography
+                        variant="body2"
+                        component="div"
+                        className={styles.p}
+                      >
+                        signup
+                      </Typography>
+                    </div>
+                    <div className={styles.iconContainer}></div>
+                  </Link>
+                </p>
+              </li>
+            )}
+            
+          </ul>
+        )}
+        <div className={styles.account}>
+          <Typography
+            sx={{
+              color: "lawngreen",
+              position: "absolute",
+              right: "0px",
+              top: "0px",
+            }}
+            variant="body2"
+            component="div"
+          >
+            {userEmail}
+          </Typography>
+          <div className={styles.dropDown}>
+            <Button
+              id="basic-button"
+              aria-controls={open ? "basic-menu" : undefined}
+              aria-haspopup="true"
+              aria-expanded={open ? "true" : undefined}
+              onClick={handleClick}
             >
-              {!session&&<MenuItem onClick={handleClose}>
+              <AccountCircleIcon id={styles.accountIcon} />
+            </Button>
+          </div>
+          <Menu
+            id="basic-menu"
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleClose}
+            MenuListProps={{
+              "aria-labelledby": "basic-button",
+            }}
+          >
+            {!session && (
+              <MenuItem onClick={handleClose}>
                 <li
                   onClick={() => {
                     router.push("/");
@@ -188,172 +329,72 @@ export default function NavBar() {
                 >
                   login
                 </li>
-              </MenuItem>}
-              {session&&<div><MenuItem onClick={handleClose}>
-                <li
-                  onClick={() => {
-                    socket.emit("offline",{accountType,id})
-                    dispatch(removeSession());
-                    router.push("/");
-                    Cookies.remove('user')
-                  }}
-                >
-                  logout
-                </li>
               </MenuItem>
-              <MenuItem onClick={handleClose}>
-                {accountType === "candidate" && (
-                  <li>
-                    <Link href="/candidate" style={{ textDecoration: "none" }}>
-                      profile
-                    </Link>
+            )}
+            {session && (
+              <div>
+                <MenuItem onClick={handleClose}>
+                  <li
+                    onClick={() => {
+                      socket.emit("offline", { accountType, id });
+                      dispatch(removeSession());
+                      router.push("/");
+                      Cookies.remove("user");
+                    }}
+                  >
+                    logout
                   </li>
-                )}
-                {accountType === "recruiter" && (
-                  <li>
-                    <Link href="/recruiter" style={{ textDecoration: "none" }}>
-                      profile
-                    </Link>
-                  </li>
-                )}
-              </MenuItem>
-              <MenuItem onClick={handleClose}>
-                <li>
-                  {" "}
-                  {accountType === "recruiter" ? (
-                    <li onClick={() => dispatch(setAccountType("candidate"))}>
+                </MenuItem>
+                <MenuItem onClick={handleClose}>
+                  {accountType === "candidate" && (
+                    <li>
                       <Link
-                        href="/auth/signin"
+                        href="/candidate"
                         style={{ textDecoration: "none" }}
                       >
-                        candidate profile
-                      </Link>
-                    </li>
-                  ) : (
-                    <li onClick={() => dispatch(setAccountType("recruiter"))}>
-                      <Link
-                        href="/auth/signin"
-                        style={{ textDecoration: "none" }}
-                      >
-                        recruiter profile
+                        profile
                       </Link>
                     </li>
                   )}
-                </li>
-              </MenuItem></div>}
-            </Menu>
-          </div>
+                  {accountType === "recruiter" && (
+                    <li>
+                      <Link
+                        href="/recruiter"
+                        style={{ textDecoration: "none" }}
+                      >
+                        profile
+                      </Link>
+                    </li>
+                  )}
+                </MenuItem>
+                <MenuItem onClick={handleClose}>
+                  <li>
+                    {" "}
+                    {accountType === "recruiter" ? (
+                      <li onClick={() => dispatch(setAccountType("candidate"))}>
+                        <Link
+                          href="/auth/signin"
+                          style={{ textDecoration: "none" }}
+                        >
+                          candidate profile
+                        </Link>
+                      </li>
+                    ) : (
+                      <li onClick={() => dispatch(setAccountType("recruiter"))}>
+                        <Link
+                          href="/auth/signin"
+                          style={{ textDecoration: "none" }}
+                        >
+                          recruiter profile
+                        </Link>
+                      </li>
+                    )}
+                  </li>
+                </MenuItem>
+              </div>
+            )}
+          </Menu>
         </div>
-      </div>
-      <div className={toggleMenu ? styles.toggleMenu : styles.closeMenu}>
-        {accountType === "candidate" && (
-          <ul className={styles.listToggle}>
-            <li onClick={() => setToggleMenu(false)}>
-              <Link
-                href="/candidate/chats"
-                style={{ textDecoration: "none", color: "white" }}
-              >
-                <p>inbox</p>
-              </Link>
-              <ChatIcon />
-            </li>
-            <li onClick={() => setToggleMenu(false)}>
-              <p>notifications</p>
-              <NotificationsNoneIcon />
-            </li>
-            <li onClick={() => setToggleMenu(false)}>
-              <p>
-                <Link
-                  href="/"
-                  style={{ textDecoration: "none", color: "white" }}
-                >
-                  jobs
-                </Link>
-              </p>
-              <WorkOutlineIcon />
-            </li>
-            <li onClick={() => setToggleMenu(false)}>
-              <Link
-                  href="/candidate/likedJobs"
-                  style={{ textDecoration: "none" , color: "white"}}
-                >
-                  <p>favourite</p>
-                </Link>
-              <FavoriteBorderIcon />
-            </li>
-            <li onClick={() => setToggleMenu(false)}>
-              <p>
-                <Link
-                  href="/candidate/appliedJobs"
-                  style={{ textDecoration: "none", color: "white" }}
-                >
-                  applied
-                </Link>
-              </p>
-            </li>
-            {!session && (
-              <li onClick={() => setToggleMenu(false)}>
-                <p>
-                  <Link
-                    href="/auth/signup"
-                    style={{ textDecoration: "none", color: "white" }}
-                  >
-                    signup
-                  </Link>
-                </p>
-              </li>
-            )}
-          </ul>
-        )}
-        {accountType === "recruiter" && (
-          <ul className={styles.listToggle}>
-            <li onClick={() => setToggleMenu(false)}>
-              <Link
-                href="/recruiter/chats"
-                style={{ textDecoration: "none", color: "white" }}
-              >
-                <p>inbox</p>
-              </Link>
-              <ChatIcon />
-            </li>
-            <li onClick={() => setToggleMenu(false)}>
-              <p>notifications</p>
-              <NotificationsNoneIcon />
-            </li>
-            <li onClick={() => setToggleMenu(false)}>
-              <p>
-                <Link
-                  href="/recruiter/vaccancy/allVaccancies"
-                  style={{ textDecoration: "none", color: "white" }}
-                >
-                  vaccanciesPosted
-                </Link>
-              </p>
-            </li>
-            <li onClick={() => setToggleMenu(false)}>
-              <p>
-                <Link
-                  href="/recruiter/vaccancy"
-                  style={{ textDecoration: "none", color: "white" }}
-                >
-                  post job
-                </Link>
-              </p>
-            </li>
-            {!session && (
-              <li onClick={() => setToggleMenu(false)}>
-                <p>
-                  <Link
-                    href="/auth/signup"
-                    style={{ textDecoration: "none", color: "white" }}
-                  >
-                    signup
-                  </Link>
-                </p>
-              </li>
-            )}
-          </ul>
-        )}
       </div>
     </div>
   );

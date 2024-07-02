@@ -1,68 +1,87 @@
-.container{
-    padding: 12px;
-    .job{
+.container {
+  padding: 12px;
+  .job {
+    display: flex;
+    flex-flow: column nowrap;
+    row-gap: 30px;
+    .header {
+      .top {
         display: flex;
-        flex-flow: column nowrap;
-        row-gap: 20px;
-        .header{
-            .company{
-                display: flex;
-                flex-flow: row nowrap;
-                align-items: center;
-                column-gap: 20px;
-                .companyName{
-
-                }
-            }
-        }
-        .skills{
-            .skill{
-                display: flex;
-                flex-flow: row wrap;
-                column-gap: 30px;
-                list-style: none;
-                row-gap: 12px;
-                li{
-                    background-color: rgb(249, 249, 249);
-                    padding: 4px;
-                    border-radius: 12px;
-                }
-            }
-        }
-        .companyWebsite{
-            .contacts{
-                display: flex;
-                flex-flow: row wrap;
-                column-gap: 30px;
-                list-style: none;
-                row-gap: 12px;
-            }
-        }
-        .info{
+        flex-flow: row nowrap;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .company {
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        column-gap: 20px;
+        .companyName {
+          .address {
             display: flex;
             flex-flow: row nowrap;
-            align-items: center;
-            column-gap: 60px;
-            color: grey;
-            font-size: 14px;
-            .sub{
-                display: flex;
-                flex-flow: row nowrap;
-                align-items: center;
-                column-gap: 60px;
-                .views,.applicants{
-                    display: flex;
-                    flex-flow: row wrap;
-                    align-items: center;
-                    column-gap: 10px;
-                }
-            }
+          }
         }
-        .footer{
-            display: flex;
-            flex-flow: row nowrap;
-            align-items: center;
-            column-gap: 70px;
-        }
+      }
     }
+    .skills {
+      .skill {
+        display: flex;
+        flex-flow: row wrap;
+        column-gap: 30px;
+        list-style: none;
+        row-gap: 12px;
+        li {
+          background-color: #f5f5f5;
+          padding-left: 8px;
+          padding-right: 8px;
+          border-radius: 12px;
+        }
+      }
+    }
+    .companyWebsite {
+      .contacts {
+        display: flex;
+        flex-flow: row wrap;
+        column-gap: 30px;
+        list-style: none;
+        row-gap: 12px;
+      }
+      .contact {
+        background-color: #f5f5f5;
+        padding-left: 8px;
+        padding-right: 8px;
+        border-radius: 12px;
+      }
+    }
+    .info {
+      display: flex;
+      flex-flow: row wrap;
+      align-items: center;
+      column-gap: 60px;
+      color: grey;
+      font-size: 14px;
+      justify-content: space-between;
+      .sub {
+        display: flex;
+        flex-flow: row wrap;
+        align-items: center;
+        column-gap: 60px;
+        margin-top: 10px;
+        row-gap: 10px;
+        .icons {
+          display: flex;
+          flex-flow: row nowrap;
+          align-items: center;
+          justify-content: space-between;
+        }
+      }
+    }
+    .footer {
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
+      column-gap: 70px;
+    }
+  }
 }

@@ -5,11 +5,13 @@ import { TextField, MenuItem, Button } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
 import ClearIcon from "@mui/icons-material/Clear";
 import Alert from '@mui/material/Alert';
-import { useSelector } from "react-redux";
+import {  useDispatch,useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import axios from "axios";
 import { baseUrl } from "@/baseUrl";
 import { io } from "socket.io-client";
+import { setSession, removeSession } from "@/store/slice/sessionSlice";
+import { useRouter } from "next/router";
 
 const socket = io(`${baseUrl}`);
 
@@ -33,6 +35,9 @@ interface Skill {
 export default function Vaccancy() {
   const id = useSelector((state:RootState)=>state.session.id)
   const [posted, setPosted] = useState<boolean>(false)
+  const user = useSelector((state: RootState) => state.session);
+  const dispatch = useDispatch();
+  const router = useRouter()
 
   const {
     register,
@@ -48,13 +53,29 @@ export default function Vaccancy() {
         data: skills,
       },
     };
-    await axios.post(`${baseUrl}/vaccancy`,submitData)
+    await axios.post(`${baseUrl}/vaccancy`,submitData ,{
+      headers: { Authorization: "Bearer " + user.access_token },
+    })
     .then(res=>{
       if(res.data.posted){
         setPosted(true)
         setTimeout(()=>{
           setPosted(false)
         },6000)
+      }
+    }).catch(async (err) => {
+      if (err.request.status === 401) {
+        await axios
+          .post(`${baseUrl}/recruiters/refresh`, { refresh_token:user.refresh_token })
+          .then((res) => {
+            dispatch(
+              setSession({ ...user, access_token: res.data.access_token })
+            );
+            if (!res.data.valid_access_token) {
+              dispatch(removeSession());
+              router.push("/auth/signin");
+            }
+          });
       }
     })
     await socket.emit("newJob")

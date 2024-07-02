@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import styles from "../styles/Modal.module.scss";
 import { useDispatch, useSelector } from "react-redux";
+import { setSession, removeSession } from "@/store/slice/sessionSlice";
 import { setCloseName } from "@/store/slice/modalSlice";
 import {
   Dialog,
@@ -16,6 +17,8 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import axios from "axios";
 import { baseUrl } from "@/baseUrl";
 import { useSWRConfig } from "swr";
+import { useRouter } from "next/router";
+import CircularProgress from '@mui/material/CircularProgress';
 
 
 type Inputs = {
@@ -29,9 +32,11 @@ type Profile ={
 }
 
 export default function EditName({profile}:Profile) {
+  const router = useRouter()
   const { mutate } = useSWRConfig();
+  const [loading, setLoading] = useState<boolean>(false)
   const open = useSelector((state:RootState)=>state.modal.openName)
-  const id = useSelector((state:RootState)=>state.session.id)
+  const user = useSelector((state:RootState)=>state.session)
   const dispatch = useDispatch() 
   
   const {
@@ -41,11 +46,27 @@ export default function EditName({profile}:Profile) {
     reset,
   } = useForm<Inputs>();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
+    setLoading(true)
       await axios
-        .patch(`${baseUrl}/candidates/profile/${id}`, data)
+        .patch(`${baseUrl}/candidates/profile/${user.id}`, data, {
+          headers: { Authorization: "Bearer " + user.access_token },
+        })
         .then((res) => {
+          setLoading(false)
+        }).catch(async err=>{
+          if(err.request.status === 401){
+            await axios.post(`${baseUrl}/candidates/refresh`,{refresh_token:user.refresh_token})
+            .then(res=>{
+              dispatch(setSession({...user,access_token:res.data.access_token}))
+              if(!res.data.valid_access_token){
+                dispatch(removeSession())
+                router.push("/auth/signin")
+              }
+            })
+          }
         });
-      await mutate(`${baseUrl}/candidates/${id}`);
+      await dispatch(setCloseName())
+      await mutate([`${baseUrl}/candidates/${user.id}`,user.access_token,user.refresh_token])
   };
   useEffect(()=>{
     reset({
@@ -97,8 +118,12 @@ export default function EditName({profile}:Profile) {
         />
         </DialogContent>
         <DialogActions>
-          <Button onClick={()=>dispatch(setCloseName())} className={styles.btn}>Cancel</Button>
-          <Button onClick={handleSubmit(onSubmit)}className={styles.btn} >update</Button>
+          <Button color="success" onClick={()=>dispatch(setCloseName())} className={styles.btn}>Cancel</Button>
+          <Button onClick={handleSubmit(onSubmit)}className={styles.btn} >
+          {
+            loading?<CircularProgress color="primary" size="20px" />:"update"
+          }
+          </Button>
         </DialogActions>
       </Dialog>
   );

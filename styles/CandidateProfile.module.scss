@@ -1,9 +1,9 @@
 $backgroundColor1: rgb(228, 226, 226);
 $backgroundColor2: #f8f4f4;
 $padding1: 20px;
-$shadow: rgb(121, 116, 116);
-$rowGap1:8px;
-$columGap1:10px;
+$shadow: #eeeeee;
+$rowGap1: 8px;
+$columGap1: 10px;
 
 .container {
   background-color: $backgroundColor1;
@@ -23,13 +23,44 @@ $columGap1:10px;
       flex-flow: row nowrap;
       align-items: center;
       justify-content: space-between;
-      .sub{
+      .editIcon {
+        background-color: lawngreen;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        border-radius: 15px;
+      }
+      .sub {
         display: flex;
         flex-flow: column nowrap;
       }
     }
-    .image{
-      .enlarge{
+    .image {
+      display: flex;
+      flex-flow: column nowrap;
+      justify-content: center;
+      align-items: center;
+      .editContaier {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        .editIcon {
+          background-color: lawngreen;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          align-items: center;
+          border-radius: 15px;
+        }
+      }
+
+      .enlarge {
         width: 300px;
         height: 300px;
         position: absolute;
@@ -37,14 +68,14 @@ $columGap1:10px;
         z-index: 4;
         border-radius: 0;
       }
-      img{
+      img {
         width: 100px;
         height: 100px;
         border-radius: 50px;
       }
     }
     &:hover {
-      box-shadow: 0 0 6px $shadow;
+      box-shadow: 0 0 1px $shadow;
     }
   }
   .about {
@@ -57,9 +88,19 @@ $columGap1:10px;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 20px;
+      .editIcon {
+        background-color: lawngreen;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        border-radius: 15px;
+      }
     }
     &:hover {
-      box-shadow: 0 0 6px $shadow;
+      box-shadow: 0 0 1px $shadow;
     }
   }
   .edu {
@@ -72,6 +113,16 @@ $columGap1:10px;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 20px;
+      .editIcon {
+        background-color: lawngreen;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        border-radius: 15px;
+      }
     }
     .sub {
       display: flex;
@@ -83,14 +134,28 @@ $columGap1:10px;
         justify-content: space-between;
         align-items: center;
         column-gap: $columGap1;
-        width: 80%;
-        background-color: $backgroundColor2;
+        width: 100%;
+        background-color: #f5f5f5;
         padding: 10px;
         border-radius: 6px;
+        .value{
+          flex: 1;
+        }
+        .editIcon {
+          // flex: 1;
+          background-color: lawngreen;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          align-items: center;
+          border-radius: 15px;
+        }
       }
     }
     &:hover {
-      box-shadow: 0 0 6px $shadow;
+      box-shadow: 0 0 1px $shadow;
     }
   }
   .prevPos {
@@ -98,7 +163,7 @@ $columGap1:10px;
     padding: $padding1;
     box-shadow: 0 0 2px #fff;
     &:hover {
-      box-shadow: 0 0 6px $shadow;
+      box-shadow: 0 0 1px $shadow;
     }
     .header {
       display: flex;
@@ -106,27 +171,48 @@ $columGap1:10px;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 20px;
+      .editIcon {
+        background-color: lawngreen;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        border-radius: 15px;
+      }
     }
     .sub {
       display: flex;
       flex-flow: row wrap;
-    //   justify-content: space-around;
+      //   justify-content: space-around;
       row-gap: $rowGap1;
       column-gap: $columGap1;
       .inner {
         display: flex;
         flex-flow: column nowrap;
-        background-color: $backgroundColor2;
+        background-color: #f5f5f5;
         padding: $padding1;
-        max-width: 40%;
+        // max-width: 40%;
         width: fit-content;
         height: fit-content;
-        .prev {
-         overflow-wrap: break-word;
-          p {
-            flex: 1;
+        .editIcon {
+          background-color: lawngreen;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
           align-items: center;
+          border-radius: 15px;
+        }
+        .prev {
+          overflow-wrap: break-word;
 
+          .top {
+            .value {
+              padding: 5px;
+            }
           }
         }
       }
@@ -137,15 +223,25 @@ $columGap1:10px;
     padding: $padding1;
     box-shadow: 0 0 2px #fff;
     &:hover {
-      box-shadow: 0 0 6px $shadow;
+      box-shadow: 0 0 1px $shadow;
     }
     .header {
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      .editIcon {
+        background-color: lawngreen;
+        width: 30px;
+        height: 30px;
         display: flex;
-        flex-flow: row nowrap;
+        flex-direction: row;
+        justify-content: center;
         align-items: center;
-        justify-content: space-between;
-        margin-bottom: 20px;
+        border-radius: 15px;
       }
+    }
     .sub {
       display: flex;
       flex-flow: row wrap;
@@ -153,15 +249,15 @@ $columGap1:10px;
       row-gap: 20px;
       column-gap: $columGap1;
       .skill {
-        padding: 10px;
+        padding: 5px;
         position: relative;
         height: fit-content;
         width: fit-content;
-        background-color: $backgroundColor1;
+        background-color: #f5f5f5;
         border-radius: 12px;
         overflow-wrap: break-word;
-        max-width: 40%;
-        span {
+        // max-width: 40%;
+        .span {
           position: absolute;
           top: -15px;
           right: -15px;
@@ -180,36 +276,65 @@ $columGap1:10px;
     padding: $padding1;
     box-shadow: 0 0 2px #fff;
     &:hover {
-      box-shadow: 0 0 6px $shadow;
+      box-shadow: 0 0 1px $shadow;
     }
     .header {
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      .addIcon {
+        background-color: lawngreen;
+        width: 30px;
+        height: 30px;
         display: flex;
-        flex-flow: row nowrap;
+        flex-direction: row;
+        justify-content: center;
         align-items: center;
-        justify-content: space-between;
-        margin-bottom: 20px;
+        border-radius: 15px;
       }
+    }
     .sub {
       display: flex;
-      flex-flow: row wrap;
+      flex-flow: column nowrap;
       justify-content: space-between;
       column-gap: $columGap1;
-      .inner{
+      .inner {
         display: flex;
-        flex-flow: row wrap;
+        flex-flow: column nowrap;
         justify-content: space-between;
-        column-gap: $columGap1;
-        .project {
+        row-gap: $columGap1;
+        margin-bottom: 20px;
+        border: 2px solid #eeeeee;
+        padding: 20px;
+        border-radius: 20px;
+        .title {
+          display: flex;
+          flex-flow: row nowrap;
+          justify-content: space-between;
+          align-items: center;
+          column-gap: 30px;
+          .editIcon {
+            background-color: lawngreen;
+            width: 30px;
+            height: 30px;
             display: flex;
-            flex-flow: row nowrap;
-            justify-content: space-between;
+            flex-direction: row;
+            justify-content: center;
             align-items: center;
-            column-gap: 30px;
-            background-color: $backgroundColor2;
-            padding: $padding1;
+            border-radius: 15px;
           }
+        }
+        .description,
+        .title,
+        .link {
+          padding-left: $padding1;
+          padding-right: $padding1;
+        }
+        .link {
+        }
       }
-      
     }
   }
   .contacts {
@@ -217,37 +342,55 @@ $columGap1:10px;
     padding: $padding1;
     box-shadow: 0 0 2px #fff;
     &:hover {
-      box-shadow: 0 0 6px $shadow;
+      box-shadow: 0 0 1px $shadow;
+    }
+    .header {
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      .editIcon {
+        background-color: lawngreen;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        border-radius: 15px;
+      }
     }
     .sub {
       display: flex;
       flex-flow: column nowrap;
       justify-content: space-between;
+
       .contact {
         display: flex;
         flex-flow: row wrap;
         justify-content: space-between;
         align-items: center;
-        p {
-          flex: 1;
+        .type {
+          background-color: #f5f5f5;
+          padding: 5px;
+          border-radius: 20px;
         }
       }
     }
   }
 }
 
-
 @media only screen and (max-width: 600px) {
-  .container{
-      .topNav{
-          .image{
-              .enlarge{
-                  width: 70vw !important;
-                  height: 70vw !important;
-                }
-          }
+  .container {
+    .topNav {
+      flex-flow: column nowrap;
+      .image {
+        .enlarge {
+          width: 70vw !important;
+          height: 70vw !important;
+        }
       }
+    }
   }
 }
-
-

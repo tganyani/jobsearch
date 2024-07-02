@@ -14,28 +14,13 @@ $backgroundColor1:rgb(246, 246, 246);
       display: flex;
       flex-flow: row nowrap;
       justify-content: space-between;
-      h4{
+      .h4{
         white-space: nowrap;
         max-width: 250px;
         text-overflow: ellipsis;
         overflow: hidden;
       }
       .searchCandidate{
-        .searchIcon{
-          display: flex;
-          flex-flow: row nowrap;
-          background-color: limegreen;
-          padding: 2px;
-          border-radius: 15px;
-          color: white;
-          width:"170px";
-          p{
-            white-space: nowrap;
-          }
-          &:hover{
-            opacity: 0.5;
-          }
-        }
       }
       
     }
@@ -49,6 +34,11 @@ $backgroundColor1:rgb(246, 246, 246);
       display: flex;
       flex-flow: row nowrap;
       justify-content: space-between;
+      .clm1{
+        display: flex;
+        flex-flow: row wrap;
+        row-gap: 10px;
+      }
       
     }
   }

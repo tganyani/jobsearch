@@ -16,6 +16,11 @@ import { RootState } from "@/store/store";
 import { useForm, SubmitHandler } from "react-hook-form";
 import axios from "axios";
 import { baseUrl } from "@/baseUrl";
+import { removeSession, setSession } from "@/store/slice/sessionSlice";
+import { useRouter } from "next/router";
+import CircularProgress from "@mui/material/CircularProgress";
+import { useState } from "react";
+
 
 interface Inputs {
     experience: number;
@@ -31,9 +36,13 @@ interface Props {
 }
 
 export default function EditSkill({skills}:Props) {
+  const router = useRouter()
   const { mutate } = useSWRConfig();
+  const [loading,setLoading] = useState<boolean>(false)
+  const [loading1,setLoading1] = useState<boolean>(false)
+  const [targetId, setTargetId] = useState<number|null>(null)
   const open = useSelector((state:RootState)=>state.modal.openSkill)
-  const id = useSelector((state:RootState)=>state.session.id)
+  const user = useSelector((state:RootState)=>state.session)
   const dispatch = useDispatch()  
   const {
     register,
@@ -43,22 +52,54 @@ export default function EditSkill({skills}:Props) {
     reset,
   } = useForm<Inputs>();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
+    await setLoading(true)
       await axios
-        .post(`${baseUrl}/candidates/skills`,{ ...data, candidateId: id })
+        .post(`${baseUrl}/candidates/skills`,{ ...data, candidateId: user.id }, {
+          headers: { Authorization: "Bearer " + user.access_token },
+        })
         .then((res) => {
-          console.log(res.data);
+          // console.log(res.data);
+          setLoading(false)
+        }).catch(async err=>{
+          if(err.request.status === 401){
+            await axios.post(`${baseUrl}/candidates/refresh`,{refresh_token:user.refresh_token})
+            .then(res=>{
+              dispatch(setSession({...user,access_token:res.data.access_token}))
+              if(!res.data.valid_access_token){
+                dispatch(removeSession())
+                router.push("/auth/signin")
+              }
+            })
+          }
         });
-      await mutate(`${baseUrl}/candidates/${id}`);
-   
+      await mutate([`${baseUrl}/candidates/${user.id}`,user.access_token,user.refresh_token])
+     
   };
   const handleCancel = async(idToDelete:number)=>{
+    await setTargetId(idToDelete)
+    await setLoading1(true)
      await axios
-        .delete(`${baseUrl}/candidates/skills/${idToDelete}`)
+        .delete(`${baseUrl}/candidates/skills/${idToDelete}`, {
+          headers: { Authorization: "Bearer " + user.access_token },
+        })
         .then((res) => {
-          console.log(res.data);
+          // console.log(res.data);
+          
+        }).catch(async err=>{
+          if(err.request.status === 401){
+            await axios.post(`${baseUrl}/candidates/refresh`,{refresh_token:user.refresh_token})
+            .then(res=>{
+              dispatch(setSession({...user,access_token:res.data.access_token}))
+              if(!res.data.valid_access_token){
+                dispatch(removeSession())
+                router.push("/auth/signin")
+              }
+            })
+          }
         });
-      await mutate(`${baseUrl}/candidates/${id}`);
-   
+      await mutate([`${baseUrl}/candidates/${user.id}`,user.access_token,user.refresh_token])
+      setLoading1(false)
+      setTargetId(null)
   }
   return (
       <Dialog open={open} onClose={()=>dispatch(setCloseSkill())} className={styles.container}>
@@ -72,7 +113,13 @@ export default function EditSkill({skills}:Props) {
                 skills.map((item:SKill)=>(
                     <div key={item.id} className={styles.inner}>
                         <p>{item.title}</p>
-                        <ClearIcon  className={styles.cancel} onClick={()=>handleCancel(item.id)}/>
+                        {
+                          (targetId!==item.id)&&<ClearIcon  className={styles.cancel} onClick={()=>handleCancel(item.id)}/>
+                          
+                        }
+                        {
+                          (loading1&&targetId===item.id)&&<CircularProgress className={styles.cancelLoading}  color="error" size="20px" />
+                        }
                     </div>
                 ))
             }
@@ -109,8 +156,8 @@ export default function EditSkill({skills}:Props) {
         )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={()=>dispatch(setCloseSkill())} className={styles.btn}>Cancel</Button>
-          <Button onClick={handleSubmit(onSubmit)}className={styles.btn} >add</Button>
+          <Button color="success" onClick={()=>dispatch(setCloseSkill())} className={styles.btn}>Cancel</Button>
+          <Button onClick={handleSubmit(onSubmit)}className={styles.btn} >{loading?<CircularProgress color="primary" size="20px" />:"add"}</Button>
         </DialogActions>
       </Dialog>
   );

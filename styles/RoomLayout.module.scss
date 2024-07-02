@@ -28,8 +28,8 @@
           display: flex;
           flex-flow: column nowrap;
           .name {
-            font-weight: 600;
-            font-size: 18px;
+            // font-weight: 600;
+            // font-size: 18px;
             width: 160px;
             white-space: nowrap;
             text-overflow: ellipsis;
@@ -39,7 +39,7 @@
             white-space: nowrap;
             text-overflow: ellipsis;
             overflow: hidden;
-            font-size: 14px;
+            font-size: 12px;
             width: 160px;
           }
         }
@@ -59,13 +59,16 @@
         &:hover {
           opacity: 0.6;
         }
+        .onlineIndicator{
+          animation: ripple 1.2s infinite ease-in-out;
+        }
         .text {
           width: inherit;
           display: flex;
           flex-flow: column nowrap;
           .name {
-            font-weight: 600;
-            font-size: 18px;
+            // font-weight: 600;
+            // font-size: 18px;
             width: 160px;
             white-space: nowrap;
             text-overflow: ellipsis;
@@ -75,14 +78,23 @@
             white-space: nowrap;
             text-overflow: ellipsis;
             overflow: hidden;
-            font-size: 14px;
+            font-size: 12px;
             width: 160px;
           }
         }
       }
     }
   }
-  
+  @keyframes ripple {
+    0%{
+      transform: scale(.8);
+      opacity: 1;
+    }
+    100%{
+      transform: scale(2.4);
+      opacity: 0;
+    }
+  }
   @media only screen and (max-width: 600px) {
     .container{
       .chatList{

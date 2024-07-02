@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useSWRConfig } from "swr";
 import styles from "../../styles/Modal.module.scss";
 import { useDispatch, useSelector } from "react-redux";
+
 
 
 import {
@@ -18,6 +20,10 @@ import axios from "axios";
 import { baseUrl } from "@/baseUrl";
 import { useEffect } from "react";
 import { setCloseContact } from "@/store/slice/modalSlice";
+import { useRouter } from "next/router";
+import { setSession, removeSession } from "@/store/slice/sessionSlice";
+import CircularProgress from "@mui/material/CircularProgress";
+
 
 type Inputs = {
     phone:string,
@@ -33,9 +39,11 @@ type Contant ={
 
 
 export default function EditRecruiterContact({ contacts}: Contant) {
+  const router = useRouter()
   const { mutate } = useSWRConfig();
+  const [loading, setLoading] = useState<boolean>(false)
   const open = useSelector((state: RootState) => state.recruiterModal.openContact);
-  const id = useSelector((state: RootState) => state.session.id);
+  const user = useSelector((state: RootState) => state.session);
   const dispatch = useDispatch();
   const {
     register,
@@ -44,11 +52,31 @@ export default function EditRecruiterContact({ contacts}: Contant) {
     reset,
   } = useForm<Inputs>();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
+    await setLoading(true)
       await axios
-        .patch(`${baseUrl}/recruiters/contacts/${id}`, data)
+        .patch(`${baseUrl}/recruiters/contacts/${user.id}`, data , {
+          headers: { Authorization: "Bearer " + user.access_token },
+        })
         .then((res) => {
+        }).catch(async err=>{
+          if(err.request.status === 401){
+            await axios.post(`${baseUrl}/recruiters/refresh`,{refresh_token:user.refresh_token})
+            .then(res=>{
+              dispatch(setSession({...user,access_token:res.data.access_token}))
+              if(!res.data.valid_access_token){
+                dispatch(removeSession())
+                router.push("/auth/signin")
+              }
+            })
+          }
         });
-      await mutate(`${baseUrl}/recruiters/${id}`);
+      await mutate([
+        `${baseUrl}/recruiters/${user.id}`,
+        user.access_token,
+        user.refresh_token,
+      ]);
+      await dispatch(setCloseContact())
+      await setLoading(false)
   };
   useEffect(()=>{
     reset({
@@ -75,7 +103,7 @@ export default function EditRecruiterContact({ contacts}: Contant) {
           autoFocus
           margin="dense"
           id="name"
-          label="website"
+          label="website link"
           type="text"
           size="small"
           defaultValue={contacts.website}
@@ -86,7 +114,7 @@ export default function EditRecruiterContact({ contacts}: Contant) {
           autoFocus
           margin="dense"
           id="name"
-          label="telegram"
+          label="telegram link"
           type="text"
           size="small"
           defaultValue={contacts.telegram}
@@ -97,7 +125,7 @@ export default function EditRecruiterContact({ contacts}: Contant) {
           autoFocus
           margin="dense"
           id="name"
-          label="linkedIn"
+          label="linkedIn link"
           type="text"
           size="small"
           defaultValue={contacts.linkedIn}
@@ -121,11 +149,14 @@ export default function EditRecruiterContact({ contacts}: Contant) {
             dispatch(setCloseContact());
           }}
           className={styles.btn}
+           color="success"
         >
           Cancel
         </Button>
         <Button onClick={handleSubmit(onSubmit)} className={styles.btn}>
-          update
+        {
+            loading?<CircularProgress size="20px" />:"update"
+          }
         </Button>
       </DialogActions>
     </Dialog>

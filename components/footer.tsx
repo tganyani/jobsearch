@@ -6,10 +6,9 @@ export default function Footer() {
   return (
     <div
       style={{
-        background: "black",
-        opacity: "0.6",
+        background: "#3e424b",
         minHeight: "100px",
-        color: "grey",
+        color: "white",
         textAlign: "center",
         paddingTop: "50px",
         paddingLeft: "30px",

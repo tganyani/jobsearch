@@ -1,4 +1,4 @@
-.contained {
+.container {
   padding: 10px;
   display: flex;
   flex-flow: column nowrap;
@@ -9,6 +9,10 @@
     // row-gap: 5px;
     box-shadow: 0 0 1px rgb(212, 212, 212);
     padding: 20px;
+    &:hover{
+      box-shadow: 0 0 2px rgb(212, 212, 212);
+      border-radius: 20px;
+    }
     .header {
       display: flex;
       flex-flow: row nowrap;
@@ -19,6 +23,12 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .footer{
+      margin-top: 10px;
+      display: flex;
+      flex-flow: row nowrap;
+      column-gap: 30px;
     }
   }
 }

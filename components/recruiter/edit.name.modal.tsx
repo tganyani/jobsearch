@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { useSWRConfig } from "swr";
 import styles from "../../styles/Modal.module.scss";
 import { useDispatch, useSelector } from "react-redux";
+import { useState } from "react";
 
 
 import {
@@ -18,28 +18,28 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import axios from "axios";
 import { baseUrl } from "@/baseUrl";
 import { useEffect } from "react";
-import { setCloseAddress } from "@/store/slice/recruiterModalSlice";
 import { setSession, removeSession } from "@/store/slice/sessionSlice";
 import { useRouter } from "next/router";
+import { setCloseName } from "@/store/slice/modalSlice";
 import CircularProgress from "@mui/material/CircularProgress";
 
 type Inputs = {
-    country:string,
-    city:string,
-    street:string,
+    firstName:string,
+    lastName:string,
+    companyName:string,
 };
 
-type Address ={
-    address:Inputs
+type Name ={
+    name:Inputs
 }
 
 
 
-export default function EditRecruiterAddress({ address}: Address) {
+export default function EditRecruiterName({ name}:Name) {
   const router = useRouter()
-  const { mutate } = useSWRConfig();
   const [loading, setLoading] = useState<boolean>(false)
-  const open = useSelector((state: RootState) => state.recruiterModal.openAddress);
+  const { mutate } = useSWRConfig();
+  const open = useSelector((state: RootState) => state.recruiterModal.openName);
   const user = useSelector((state: RootState) => state.session);
   const dispatch = useDispatch();
   const {
@@ -51,7 +51,7 @@ export default function EditRecruiterAddress({ address}: Address) {
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     await setLoading(true)
       await axios
-        .patch(`${baseUrl}/recruiters/address/${user.id}`, data, {
+        .patch(`${baseUrl}/recruiters/name/${user.id}`, data, {
           headers: { Authorization: "Bearer " + user.access_token },
         })
         .then((res) => {
@@ -72,24 +72,25 @@ export default function EditRecruiterAddress({ address}: Address) {
         user.access_token,
         user.refresh_token,
       ]);
-      await dispatch(setCloseAddress())
+      await dispatch(setCloseName())
       await setLoading(false)
   };
+  
   useEffect(()=>{
     reset({
-        country:address.country,
-        city:address.city,
-        street:address.street,
+        firstName:name.firstName,
+        lastName:name.lastName,
+        companyName:name.companyName,
     })
   },[open])
 
   return (
     <Dialog
       open={open}
-      onClose={() => dispatch(setCloseAddress())}
+      onClose={() => dispatch(setCloseName())}
       className={styles.container}
     >
-      <DialogTitle>address</DialogTitle>
+      <DialogTitle>recruiter details</DialogTitle>
       <DialogContent className={styles.content}>
         <DialogContentText>
          Are you sure you want to edit?
@@ -99,42 +100,52 @@ export default function EditRecruiterAddress({ address}: Address) {
           autoFocus
           margin="dense"
           id="name"
-          label="country"
+          label="fist name"
           type="text"
           size="small"
-          defaultValue={address.country}
-          {...register("country")}
+          defaultValue={name.firstName}
+          {...register("firstName", { required: true })}
         />
+        {errors.firstName && (
+          <span style={{ color: "red", width: "100%" }}>
+            This field is required
+          </span>
+        )}
          <TextField
           className={styles.input}
           autoFocus
           margin="dense"
           id="name"
-          label="city"
+          label="last name"
           type="text"
           size="small"
-          defaultValue={address.city}
-          {...register("city")}
+          defaultValue={name.lastName}
+          {...register("lastName", { required: true })}
         />
+        {errors.lastName && (
+          <span style={{ color: "red", width: "100%" }}>
+            This field is required
+          </span>
+        )}
          <TextField
           className={styles.input}
           autoFocus
           margin="dense"
           id="name"
-          label="street"
+          label="companyName"
           type="text"
           size="small"
-          defaultValue={address.street}
-          {...register("street")}
+          defaultValue={name.companyName}
+          {...register("companyName")}
         />
       </DialogContent>
       <DialogActions>
         <Button
           onClick={() => {
-            dispatch(setCloseAddress());
+            dispatch(setCloseName());
           }}
           className={styles.btn}
-           color="success"
+          color="success"
         >
           Cancel
         </Button>

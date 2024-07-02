@@ -25,13 +25,16 @@
       &:hover {
         opacity: 0.6;
       }
+      .onlineIndicator{
+        animation: ripple 2.2s infinite ease-in-out;
+      }
       .text {
         width: inherit;
         display: flex;
         flex-flow: column nowrap;
         .name {
-          font-weight: 600;
-          font-size: 18px;
+          // font-weight: 600;
+          // font-size: 18px;
           width: 160px;
           white-space: nowrap;
           text-overflow: ellipsis;
@@ -41,11 +44,22 @@
           white-space: nowrap;
           text-overflow: ellipsis;
           overflow: hidden;
-          font-size: 14px;
+          font-size: 12px;
           width: 160px;
         }
       }
     }
+  }
+}
+
+@keyframes ripple {
+  0%{
+    transform: scale(.9);
+    opacity: 1;
+  }
+  100%{
+    transform: scale(1.1);
+    opacity: 0.6;
   }
 }
 

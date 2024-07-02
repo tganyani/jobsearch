@@ -4,19 +4,15 @@ import type { NextPage } from "next";
 import Layout from "@/components/layout";
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
-import { Roboto } from "@next/font/google";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { persistStore } from "redux-persist";
 
+import "@fontsource/roboto";
+
 let persistor = persistStore(store);
 
 import { store } from "../store/store";
-
-const roboto = Roboto({
-  weight: "300",
-  subsets: ["latin"],
-});
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
@@ -32,7 +28,7 @@ export default function App({
 }: AppPropsWithLayout) {
   const getLayout = Component.getLayout ?? ((page) => page);
   return(
-    <div className={roboto.className}>
+    <div >
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <Layout>

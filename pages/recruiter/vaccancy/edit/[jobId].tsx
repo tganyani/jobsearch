@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
+import { useDispatch, useSelector } from "react-redux";
 import useSWR from "swr";
 import styles from "@/styles/Vaccancy.module.scss";
 import { TextField, MenuItem, Button } from "@mui/material";
@@ -9,6 +10,8 @@ import ClearIcon from "@mui/icons-material/Clear";
 import axios from "axios";
 import { baseUrl } from "@/baseUrl";
 import { io } from "socket.io-client";
+import { RootState } from "@/store/store";
+import { setSession,removeSession } from "@/store/slice/sessionSlice";
 
 const socket = io(`${baseUrl}`);
 
@@ -32,9 +35,11 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function EditVaccancy() {
   const router = useRouter();
+  const user = useSelector((state: RootState) => state.session);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [skill, setSkill] = useState<string>("");
   const vaccancyId = router.query.jobId;
+  const dispatch = useDispatch();
 
   const {
     register,
@@ -44,8 +49,30 @@ export default function EditVaccancy() {
   } = useForm<Inputs>();
 
   const { data, error } = useSWR(
-    `${baseUrl}/vaccancy/${vaccancyId}`,
-    fetcher
+    [
+      `${baseUrl}/vaccancy/${vaccancyId}`,
+      user.access_token,
+      user.refresh_token,
+    ],
+    async ([url, access_token, refresh_token]) =>
+      await axios
+        .get(url, { headers: { Authorization: "Bearer " + access_token } })
+        .then((res) => res.data)
+        .catch(async (err) => {
+          if (err.request.status === 401) {
+            await axios
+              .post(`${baseUrl}/recruiters/refresh`, { refresh_token })
+              .then((res) => {
+                dispatch(
+                  setSession({ ...user, access_token: res.data.access_token })
+                );
+                if (!res.data.valid_access_token) {
+                  dispatch(removeSession());
+                  router.push("/auth/signin");
+                }
+              });
+          }
+        })
   );
 
   useEffect(()=>{
@@ -69,9 +96,23 @@ export default function EditVaccancy() {
         data: skills,
       },
     };
-    await axios.patch(`${baseUrl}/vaccancy/${vaccancyId}`, submitData).then((res) => {
-    //   alert(res.data?.message);
-    });
+    await axios
+        .patch(`${baseUrl}/vaccancy/${vaccancyId}`, submitData, {
+          headers: { Authorization: "Bearer " + user.access_token },
+        })
+        .then((res) => {
+        }).catch(async err=>{
+          if(err.request.status === 401){
+            await axios.post(`${baseUrl}/recruiters/refresh`,{refresh_token:user.refresh_token})
+            .then(res=>{
+              dispatch(setSession({...user,access_token:res.data.access_token}))
+              if(!res.data.valid_access_token){
+                dispatch(removeSession())
+                router.push("/auth/signin")
+              }
+            })
+          }
+        });
     await socket.emit("newJob");
     await socket.emit("newJobUpdate")
     await router.push(`/recruiter/vaccancy/preview/${vaccancyId}`)

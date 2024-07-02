@@ -1,7 +1,7 @@
 import { useSWRConfig } from "swr";
 import styles from "../styles/Modal.module.scss";
 import { useDispatch, useSelector } from "react-redux";
-import { setCloseContact} from "@/store/slice/modalSlice";
+import { setCloseContact } from "@/store/slice/modalSlice";
 import {
   Dialog,
   DialogActions,
@@ -15,42 +15,72 @@ import { RootState } from "@/store/store";
 import { useForm, SubmitHandler } from "react-hook-form";
 import axios from "axios";
 import { baseUrl } from "@/baseUrl";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { setSession, removeSession } from "@/store/slice/sessionSlice";
+import CircularProgress from "@mui/material/CircularProgress";
 
 type Inputs = {
-    email:string
-    phone: string;
+  email: string;
+  phone: string;
 };
 
 type Props = {
   contacts: Inputs;
 };
 
-export default function EditContacts({ contacts}: Props) {
+export default function EditContacts({ contacts }: Props) {
+  const router = useRouter();
   const { mutate } = useSWRConfig();
+  const [loading, setLoading] = useState<boolean>(false);
   const open = useSelector((state: RootState) => state.modal.openContact);
-  const id = useSelector((state: RootState) => state.session.id);
+  const user = useSelector((state: RootState) => state.session);
   const dispatch = useDispatch();
   const {
     register,
     handleSubmit,
-    formState: { errors},
+    formState: { errors },
     reset,
   } = useForm<Inputs>();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
-      await axios
-        .patch(`${baseUrl}/candidates/contacts/${id}`, data)
-        .then((res) => {
-        });
-      await mutate(`${baseUrl}/candidates/${id}`);
+    await setLoading(true);
+    await axios
+      .patch(`${baseUrl}/candidates/contacts/${user.id}`, data, {
+        headers: { Authorization: "Bearer " + user.access_token },
+      })
+      .then((res) => {})
+      .catch(async (err) => {
+        if (err.request.status === 401) {
+          await axios
+            .post(`${baseUrl}/candidates/refresh`, {
+              refresh_token: user.refresh_token,
+            })
+            .then((res) => {
+              dispatch(
+                setSession({ ...user, access_token: res.data.access_token })
+              );
+              if (!res.data.valid_access_token) {
+                dispatch(removeSession());
+                router.push("/auth/signin");
+              }
+            });
+        }
+      });
+    await setLoading(false);
+    await dispatch(setCloseContact());
+    await mutate([
+      `${baseUrl}/candidates/${user.id}`,
+      user.access_token,
+      user.refresh_token,
+    ]);
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     reset({
-        phone:contacts.phone,
-        email:contacts.email,
-    })
-  },[open])
+      phone: contacts.phone,
+      email: contacts.email,
+    });
+  }, [open]);
   return (
     <Dialog
       open={open}
@@ -59,9 +89,7 @@ export default function EditContacts({ contacts}: Props) {
     >
       <DialogTitle>contacts</DialogTitle>
       <DialogContent className={styles.content}>
-        <DialogContentText>
-         Are you sure you want to edit?
-        </DialogContentText>
+        <DialogContentText>Are you sure you want to edit?</DialogContentText>
         <TextField
           className={styles.input}
           autoFocus
@@ -91,11 +119,14 @@ export default function EditContacts({ contacts}: Props) {
             dispatch(setCloseContact());
           }}
           className={styles.btn}
+          color="success"
         >
           Cancel
         </Button>
         <Button onClick={handleSubmit(onSubmit)} className={styles.btn}>
-          update
+          {
+            loading?<CircularProgress color="primary" size="20px"/>:"update"
+          }
         </Button>
       </DialogActions>
     </Dialog>

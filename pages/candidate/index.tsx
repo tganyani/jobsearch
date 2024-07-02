@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "../../styles/CandidateProfile.module.scss";
 
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
+import axios from "axios";
 
 import EditIcon from "@mui/icons-material/Edit";
 
@@ -21,7 +22,7 @@ import {
 } from "@/store/slice/modalSlice";
 import EditEdu from "@/components/edit.education.modal";
 import AddIcon from "@mui/icons-material/Add";
-import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 
 import type { Edu } from "@/components/edit.education.modal";
 import EditPrevPositions, { Pos } from "@/components/edit.prevPositions.modal";
@@ -29,20 +30,75 @@ import EditSkill from "@/components/edit.skills.modal";
 import EditProjects, { Proj } from "@/components/edit.projects.modal";
 import EditContacts from "@/components/edit.contacts.modal";
 import EditCandidateProfileImage from "@/components/edit.candidateProfileImage";
-import LocationOnIcon from '@mui/icons-material/LocationOn';
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 import EditCandateAbout from "@/components/edit.candidate.about";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { setSession, removeSession } from "@/store/slice/sessionSlice";
+import { useRouter } from "next/router";
+import { useTheme } from "@mui/material/styles";
+import { useMediaQuery } from "@mui/material";
+import Carousel from "react-material-ui-carousel";
+import { Typography } from "@mui/material";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import InsertPhotoIcon from "@mui/icons-material/InsertPhoto";
+
+// const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+function groupIntoChunks(array: any, chunkSize: any) {
+  const output: any = [];
+  let currentChunk: any = [];
+
+  array.forEach((item: any, index: any) => {
+    currentChunk.push(item);
+
+    if ((index + 1) % chunkSize === 0 || index === array.length - 1) {
+      output.push(currentChunk);
+      currentChunk = [];
+    }
+  });
+
+  return output;
+}
 
 export default function CandidateProfile() {
+  const router = useRouter();
   const [editMode, setEditMode] = useState<boolean>(false);
   const [editPrev, setEditPrev] = useState<boolean>(false);
   const [editProject, setEditProject] = useState<boolean>(false);
   const [index, setIndex] = useState<number>(0);
   const [enlargeImg, setEnlargeImg] = useState<boolean>(true);
   const id = useSelector((state: RootState) => state.session.id);
+  const user = useSelector((state: RootState) => state.session);
   const dispatch = useDispatch();
-  const { data, error } = useSWR(`${baseUrl}/candidates/${id}`, fetcher);
+  // Determine if it's a mobile or tablet device
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
+  // Determine the chunk size based on device
+  const chunkSize = isTablet ? (isMobile ? 1 : 2) : 3;
+
+  const { data, error } = useSWR(
+    [`${baseUrl}/candidates/${id}`, user.access_token, user.refresh_token],
+    async ([url, access_token, refresh_token]) =>
+      await axios
+        .get(url, { headers: { Authorization: "Bearer " + access_token } })
+        .then((res) => res.data)
+        .catch(async (err) => {
+          if (err.request.status === 401) {
+            await axios
+              .post(`${baseUrl}/candidates/refresh`, { refresh_token })
+              .then((res) => {
+                dispatch(
+                  setSession({ ...user, access_token: res.data.access_token })
+                );
+                if (!res.data.valid_access_token) {
+                  dispatch(removeSession());
+                  router.push("/auth/signin");
+                }
+              });
+          }
+        })
+  );
   if (error) return <div>Failed to load</div>;
   if (!data) return <div>Loading...</div>;
   return (
@@ -50,41 +106,131 @@ export default function CandidateProfile() {
       <div className={styles.topNav}>
         <div className={styles.name}>
           <div className={styles.sub}>
-            <h4>{data?.firstName}</h4>
-            <p>{data.position}</p>
+            <Typography
+              variant="body1"
+              component="div"
+              className={styles.value}
+            >
+              {data?.firstName}
+            </Typography>
+            <Typography
+              color="text.secondary"
+              variant="body2"
+              component="div"
+              className={styles.value}
+            >
+              {data.position}
+            </Typography>
             <div>
-              <p><LocationOnIcon/>{data.city},{data.country}</p>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <LocationOnIcon sx={{ color: "lawngreen", fontSize: "20px" }} />
+                <Typography
+                  color="text.secondary"
+                  variant="body2"
+                  component="div"
+                  className={styles.value}
+                >
+                  {data.city},{data.country}
+                </Typography>
+              </div>
             </div>
           </div>
-          <EditIcon onClick={() => dispatch(setOpenName())} />
-          <EditName profile={{position:data.position,city:data.city,country:data.country}}/>
+          <div className={styles.editIcon}>
+            <EditIcon
+              sx={{ color: "white" }}
+              onClick={() => dispatch(setOpenName())}
+            />
+          </div>
+          <EditName
+            profile={{
+              position: data.position,
+              city: data.city,
+              country: data.country,
+            }}
+          />
         </div>
         <div className={styles.image}>
-          {!data.image&&<AddPhotoAlternateIcon style={{fontSize:"50px"}} onClick={() => dispatch(setOpenImage())}/>}
-          {data.image&&<img
-            onClick={() => setEnlargeImg(!enlargeImg)}
-            className={enlargeImg ? styles.img : styles.enlarge}
-            src={`${baseUrl}${data.image}`}
-            alt="profile"
-          />}
+          {!data.image && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "lawngreen",
+                width:"30px",
+                height:"30px",
+                borderRadius:"15px"
+              }}
+            >
+              <AddPhotoAlternateIcon
+              sx={{color:"white"}}
+                style={{ fontSize: "25px" }}
+                onClick={() => dispatch(setOpenImage())}
+              />
+            </div>
+          )}
+          {data.image && (
+            <img
+              onClick={() => setEnlargeImg(!enlargeImg)}
+              className={enlargeImg ? styles.img : styles.enlarge}
+              src={`${baseUrl}${data.image}`}
+              alt="profile"
+            />
+          )}
           <EditCandidateProfileImage prevPath={data.image} />
-          {data.image&&<EditIcon onClick={() => dispatch(setOpenImage())} />}
+          {data.image && (
+            <div className={styles.editContaier}>
+              <div className={styles.editIcon}>
+                <InsertPhotoIcon
+                  sx={{ color: "white" }}
+                  onClick={() => dispatch(setOpenImage())}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <div className={styles.about}>
         <div className={styles.header}>
-        <h5>about</h5>
-        <EditIcon onClick={() => dispatch(setOpenAbout())} />
+          <Typography variant="h6" component="h6">
+            about
+          </Typography>
+          <div className={styles.editIcon}>
+            <EditIcon
+              sx={{ color: "white" }}
+              onClick={() => dispatch(setOpenAbout())}
+            />
+          </div>
         </div>
-        <p>
+        <Typography
+          color="text.secondary"
+          variant="body2"
+          component="div"
+          className={styles.value}
+        >
           {data.about}
-        </p>
-        <EditCandateAbout about={data.about}/>
+        </Typography>
+        <EditCandateAbout about={data.about} />
       </div>
       <div className={styles.edu}>
         <div className={styles.header}>
-          <h5>education</h5>
-          <AddIcon onClick={() => dispatch(setOpenEdu())} />
+          <Typography variant="h6" component="h6">
+            education
+          </Typography>
+          <div className={styles.editIcon}>
+            <AddIcon
+              sx={{ color: "white" }}
+              onClick={() => dispatch(setOpenEdu())}
+            />
+          </div>
         </div>
         <div className={styles.sub}>
           {data?.education.map((edu: Edu, i: number) => (
@@ -98,31 +244,33 @@ export default function CandidateProfile() {
               }}
             >
               <div className={styles.education}>
-                <p>{edu.schoolName}</p>
-                <p>
-                  <span style={{ fontWeight: "700", marginRight: "10px" }}>
-                    from{" "}
-                  </span>{" "}
-                  {edu.startDate}{" "}
-                  <span
-                    style={{
-                      fontWeight: "700",
-                      marginRight: "10px",
-                      marginLeft: "10px",
+                <Typography
+                  color="text.secondary"
+                  variant="body2"
+                  component="div"
+                  className={styles.value}
+                >
+                  {edu.schoolName}
+                </Typography>
+                <Typography
+                  color="text.secondary"
+                  variant="body2"
+                  component="div"
+                  className={styles.value}
+                >
+                  {edu.startDate} / {edu.endDate}
+                </Typography>
+                <div className={styles.editIcon}>
+                  <EditIcon
+                    sx={{ color: "white" }}
+                    onClick={() => {
+                      dispatch(setOpenEdu());
+                      setEditMode(true);
+                      setIndex(edu.id);
                     }}
-                  >
-                    to
-                  </span>{" "}
-                  {edu.endDate}
-                </p>
+                  />
+                </div>
               </div>
-              <EditIcon
-                onClick={() => {
-                  dispatch(setOpenEdu());
-                  setEditMode(true);
-                  setIndex(edu.id);
-                }}
-              />
             </div>
           ))}
           <EditEdu
@@ -134,29 +282,68 @@ export default function CandidateProfile() {
       </div>
       <div className={styles.prevPos}>
         <div className={styles.header}>
-          <h5>previous positions</h5>
-          <AddIcon onClick={() => dispatch(setOpenPrevPos())} />
+          <Typography variant="h6" component="h6">
+            previous positions
+          </Typography>
+
+          <div className={styles.editIcon}>
+            <AddIcon
+              sx={{ color: "white" }}
+              onClick={() => dispatch(setOpenPrevPos())}
+            />
+          </div>
         </div>
         <div className={styles.sub}>
           {data?.previousPosition.map((item: Pos, i: number) => (
             <div key={item.id} className={styles.inner}>
               <div className={styles.prev}>
-                <div>
-                  <p>company name :{item.companyName}</p>
-                  <p>position : {item.position}</p>
-                  <p>
+                <div className={styles.top}>
+                  <Typography variant="body1" component="div">
+                    company name
+                  </Typography>
+                  <Typography
+                    color="text.secondary"
+                    variant="body2"
+                    component="div"
+                    className={styles.value}
+                  >
+                    {item.companyName}
+                  </Typography>
+                  <Typography variant="body1" component="div">
+                    position
+                  </Typography>
+                  <Typography
+                    color="text.secondary"
+                    variant="body2"
+                    component="div"
+                    className={styles.value}
+                  >
+                    {item.position}
+                  </Typography>
+                  <Typography variant="body1" component="div">
+                    duration
+                  </Typography>
+                  <Typography
+                    color="text.secondary"
+                    variant="body2"
+                    component="div"
+                    className={styles.value}
+                  >
                     {item.startDate}
-                    {"    "}-{"   "} {item.endDate}
-                  </p>
+                    {"    "}/{"   "} {item.endDate}
+                  </Typography>
                 </div>
               </div>
-              <EditIcon
-                onClick={() => {
-                  dispatch(setOpenPrevPos());
-                  setEditPrev(true);
-                  setIndex(item.id);
-                }}
-              />
+              <div className={styles.editIcon}>
+                <EditIcon
+                  sx={{ color: "white" }}
+                  onClick={() => {
+                    dispatch(setOpenPrevPos());
+                    setEditPrev(true);
+                    setIndex(item.id);
+                  }}
+                />
+              </div>
             </div>
           ))}
           <EditPrevPositions
@@ -170,14 +357,34 @@ export default function CandidateProfile() {
       </div>
       <div className={styles.skills}>
         <div className={styles.header}>
-          <h5>skills</h5>
-          <AddIcon onClick={() => dispatch(setOpenSkill())} />
+          <Typography variant="h6" component="h6">
+            skills
+          </Typography>
+          <div className={styles.editIcon}>
+            <AddIcon
+              sx={{ color: "white" }}
+              onClick={() => dispatch(setOpenSkill())}
+            />
+          </div>
         </div>
         <div className={styles.sub}>
           {data?.skills.map((item: any) => (
             <div key={item.id} className={styles.skill}>
-              <p>{item.title}</p>
-              <span>{item.experience}</span>
+              <Typography
+                color="text.secondary"
+                variant="body2"
+                component="div"
+              >
+                {item.title}
+              </Typography>
+              <Typography
+                color="text.secondary"
+                className={styles.span}
+                variant="body2"
+                component="div"
+              >
+                {item.experience}y
+              </Typography>
             </div>
           ))}
         </div>
@@ -185,25 +392,73 @@ export default function CandidateProfile() {
       </div>
       <div className={styles.projects}>
         <div className={styles.header}>
-          <h5>projects</h5>
-          <AddIcon onClick={() => dispatch(setOpenProject())} />
+          <Typography variant="h6" component="h6">
+            projects
+          </Typography>
+          <div className={styles.addIcon}>
+            <AddIcon
+              sx={{ color: "white" }}
+              onClick={() => dispatch(setOpenProject())}
+            />
+          </div>
         </div>
         <div className={styles.sub}>
           {data?.projects.map((item: any) => (
             <div key={item.id} className={styles.inner}>
-              <div className={styles.project}>
-                <p>{item.title}</p>
-                <div>
-                  <a href={item.link}>visit</a>
+              <div className={styles.title}>
+                <Typography variant="body1" component="div">
+                  {item.title}
+                </Typography>
+                <div className={styles.editIcon}>
+                  <EditIcon
+                    sx={{ color: "white" }}
+                    onClick={() => {
+                      dispatch(setOpenProject());
+                      setEditProject(true);
+                      setIndex(item.id);
+                    }}
+                  />
                 </div>
               </div>
-              <EditIcon
-                onClick={() => {
-                  dispatch(setOpenProject());
-                  setEditProject(true);
-                  setIndex(item.id);
-                }}
-              />
+              <div className={styles.description}>
+                <Typography
+                  color="text.secondary"
+                  variant="body2"
+                  component="div"
+                >
+                  {item.description}
+                </Typography>
+              </div>
+
+              <Carousel>
+                {groupIntoChunks(item?.images, chunkSize).map(
+                  (imgGroup: any, groupIndex: any) => (
+                    <div
+                      key={groupIndex}
+                      style={{
+                        display: "flex",
+                        flexFlow: "row nowrap",
+                        justifyContent: "space-around",
+                      }}
+                    >
+                      {imgGroup?.map((image: any) => (
+                        <div key={image.id}>
+                          <img
+                            style={{ width: "200px", height: "200px" }}
+                            src={`${baseUrl}${image.url}`}
+                            alt="project-image"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )
+                )}
+              </Carousel>
+              <div className={styles.link}>
+                <a href={item.link}>
+                  <OpenInNewIcon sx={{ color: "lawngreen" }} />
+                </a>
+              </div>
             </div>
           ))}
         </div>
@@ -214,17 +469,38 @@ export default function CandidateProfile() {
         />
       </div>
       <div className={styles.contacts}>
-        <h5>contacts</h5>
+        <div className={styles.header}>
+          <Typography variant="h6" component="h6">
+            contacts
+          </Typography>
+          <div className={styles.editIcon}>
+            <EditIcon
+              sx={{ color: "white" }}
+              onClick={() => {
+                dispatch(setOpenContact());
+              }}
+            />
+          </div>
+        </div>
         <div className={styles.sub}>
           <div className={styles.contact}>
-            <p>{data?.contacts?.email}</p>,
-            <p>{data?.contacts?.phone}</p>
+            <Typography
+              className={styles.type}
+              color="text.secondary"
+              variant="body2"
+              component="div"
+            >
+              {data?.contacts?.email}
+            </Typography>
+            <Typography
+              className={styles.type}
+              color="text.secondary"
+              variant="body2"
+              component="div"
+            >
+              {data?.contacts?.phone}
+            </Typography>
           </div>
-          <EditIcon
-            onClick={() => {
-              dispatch(setOpenContact());
-            }}
-          />
         </div>
         <EditContacts
           contacts={{

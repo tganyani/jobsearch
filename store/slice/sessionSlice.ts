@@ -4,6 +4,7 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 export interface SessionType {
   email: string,
   access_token:string,
+  refresh_token:string,
   id:number | null,
   position:string
 }
@@ -11,6 +12,7 @@ export interface SessionType {
 const initialState:SessionType = {
     email:"",
     access_token:"",
+    refresh_token:"",
     id:null,
     position:"",
 }
@@ -23,6 +25,7 @@ export const sessionSlice = createSlice({
       return{
         email:action.payload.email,
         access_token: action.payload.access_token,
+        refresh_token:action.payload.refresh_token,
         id:action.payload.id,
         position:action.payload.position
       }
@@ -32,7 +35,8 @@ export const sessionSlice = createSlice({
             email:"",
             access_token:"",
             id:null,
-            position:""
+            position:"",
+            refresh_token:"",
         }
     }
    

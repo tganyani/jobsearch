@@ -16,7 +16,10 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import dayjs from "dayjs";
 import axios from "axios";
 import { baseUrl } from "@/baseUrl";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { setSession, removeSession } from "@/store/slice/sessionSlice";
+import { useRouter } from "next/router";
+import CircularProgress from "@mui/material/CircularProgress";
 
 type Inputs = {
   schoolName: string;
@@ -32,9 +35,12 @@ type Props = {
 };
 
 export default function EditEdu({ edu, editMode, setEditMode }: Props) {
+  const router = useRouter();
   const { mutate } = useSWRConfig();
   const open = useSelector((state: RootState) => state.modal.openEdu);
-  const id = useSelector((state: RootState) => state.session.id);
+  const user = useSelector((state: RootState) => state.session);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [loading1, setLoading1] = useState<boolean>(false);
   const dispatch = useDispatch();
   const {
     register,
@@ -45,20 +51,105 @@ export default function EditEdu({ edu, editMode, setEditMode }: Props) {
   } = useForm<Inputs>();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     if (editMode) {
+      setLoading1(true);
       await axios
-        .patch(`${baseUrl}/candidates/edu/${edu.id}`, data)
+        .patch(`${baseUrl}/candidates/edu/${edu?.id}`, data, {
+          headers: { Authorization: "Bearer " + user.access_token },
+        })
         .then((res) => {
-          console.log(res.data);
+          // console.log(res.data);
+          setLoading1(false);
+        })
+        .catch(async (err) => {
+          if (err.request.status === 401) {
+            await axios
+              .post(`${baseUrl}/candidates/refresh`, {
+                refresh_token: user.refresh_token,
+              })
+              .then((res) => {
+                dispatch(
+                  setSession({ ...user, access_token: res.data.access_token })
+                );
+                if (!res.data.valid_access_token) {
+                  dispatch(removeSession());
+                  router.push("/aut/signin");
+                }
+              });
+          }
         });
-      await mutate(`${baseUrl}/candidates/${id}`);
     } else {
+      setLoading1(true);
       await axios
-        .post(`${baseUrl}/candidates/edu`, { ...data, candidateId: id })
+        .post(
+          `${baseUrl}/candidates/edu`,
+          { ...data, candidateId: user.id },
+          {
+            headers: { Authorization: "Bearer " + user.access_token },
+          }
+        )
         .then((res) => {
-          console.log(res.data);
+          setLoading1(false);
+        })
+        .catch(async (err) => {
+          if (err.request.status === 401) {
+            await axios
+              .post(`${baseUrl}/candidates/refresh`, {
+                refresh_token: user.refresh_token,
+              })
+              .then((res) => {
+                dispatch(
+                  setSession({ ...user, access_token: res.data.access_token })
+                );
+                if (!res.data.valid_access_token) {
+                  dispatch(removeSession());
+                  router.push("/aut/signin");
+                }
+              });
+          }
         });
-      await mutate(`${baseUrl}/candidates/${id}`);
     }
+    await dispatch(setCloseEdu());
+    await mutate([
+      `${baseUrl}/candidates/${user.id}`,
+      user.access_token,
+      user.refresh_token,
+    ]);
+  await setEditMode(false)
+  };
+  const handleDeleteEducation = async () => {
+    await setLoading(true);
+    await axios
+      .delete(`${baseUrl}/candidates/edu/${edu?.id}`, {
+        headers: { Authorization: "Bearer " + user.access_token },
+      })
+      .then((res) => {
+        // console.log(res.data);
+        setLoading(false);
+      })
+      .catch(async (err) => {
+        if (err.request.status === 401) {
+          await axios
+            .post(`${baseUrl}/candidates/refresh`, {
+              refresh_token: user.refresh_token,
+            })
+            .then((res) => {
+              dispatch(
+                setSession({ ...user, access_token: res.data.access_token })
+              );
+              if (!res.data.valid_access_token) {
+                dispatch(removeSession());
+                router.push("/aut/signin");
+              }
+            });
+        }
+      });
+    await dispatch(setCloseEdu());
+    await mutate([
+      `${baseUrl}/candidates/${user.id}`,
+      user.access_token,
+      user.refresh_token,
+    ]);
+    await setEditMode(false)
   };
   useEffect(() => {
     const Reset = () => {
@@ -70,15 +161,14 @@ export default function EditEdu({ edu, editMode, setEditMode }: Props) {
         });
       } else {
         reset({
-          schoolName: edu.schoolName,
-          startDate: edu.startDate,
-          endDate: edu.endDate,
+          schoolName: edu?.schoolName,
+          startDate: edu?.startDate,
+          endDate: edu?.endDate,
         });
       }
     };
-    Reset()
+    Reset();
   }, [open]);
-  console.log(edu);
   return (
     <Dialog
       open={open}
@@ -95,12 +185,12 @@ export default function EditEdu({ edu, editMode, setEditMode }: Props) {
           className={styles.input}
           autoFocus
           margin="dense"
-          id="name"
           label="school name"
           type="text"
           size="small"
+          sx={{ width: "100%" }}
           {...register("schoolName", { required: true })}
-          defaultValue={editMode ? edu.schoolName : ""}
+          defaultValue={editMode ? edu?.schoolName : ""}
         />
         {errors.schoolName && (
           <span style={{ color: "red", width: "100%" }}>
@@ -111,16 +201,16 @@ export default function EditEdu({ edu, editMode, setEditMode }: Props) {
           className={styles.input}
           autoFocus
           margin="dense"
-          id="name"
           label="start date"
           type="date"
           size="small"
+          sx={{ width: "100%" }}
           InputLabelProps={{
             shrink: true,
           }}
           {...register("startDate", { required: true })}
           defaultValue={
-            editMode ? dayjs(edu.startDate).format("YYYY-MM-DD") : ""
+            editMode ? dayjs(edu?.startDate).format("YYYY-MM-DD") : ""
           }
         />
         {errors.startDate && (
@@ -132,15 +222,17 @@ export default function EditEdu({ edu, editMode, setEditMode }: Props) {
           className={styles.input}
           autoFocus
           margin="dense"
-          id="name"
           label="end date"
           type="date"
           size="small"
+          sx={{ width: "100%" }}
           InputLabelProps={{
             shrink: true,
           }}
           {...register("endDate", { required: true })}
-          defaultValue={editMode ? dayjs(edu.endDate).format("YYYY-MM-DD") : ""}
+          defaultValue={
+            editMode ? dayjs(edu?.endDate).format("YYYY-MM-DD") : ""
+          }
         />
         {errors.endDate && (
           <span style={{ color: "red", width: "100%" }}>
@@ -149,17 +241,37 @@ export default function EditEdu({ edu, editMode, setEditMode }: Props) {
         )}
       </DialogContent>
       <DialogActions>
+        {editMode && (
+          <Button
+            color="error"
+            onClick={handleDeleteEducation}
+            className={styles.btn}
+          >
+            {loading ? (
+              <CircularProgress color="error" size="20px" />
+            ) : (
+              "delete"
+            )}
+          </Button>
+        )}
         <Button
           onClick={() => {
             dispatch(setCloseEdu());
             setEditMode(false);
           }}
           className={styles.btn}
+          color="success"
         >
           Cancel
         </Button>
         <Button onClick={handleSubmit(onSubmit)} className={styles.btn}>
-          {editMode ? "update" : "add"}
+          {loading1 ? (
+            <CircularProgress color="primary" size="20px" />
+          ) :( editMode ? (
+            "update"
+          ) : (
+            "add"
+          ))}
         </Button>
       </DialogActions>
     </Dialog>

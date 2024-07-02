@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { baseUrl } from "@/baseUrl";
 import { RootState } from "@/store/store";
 import Link from "next/link";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { setSession, removeSession } from "@/store/slice/sessionSlice";
 import useSWR,{useSWRConfig} from "swr";
 import styles from "../styles/ChatsLayout.module.scss";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { io } from "socket.io-client";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import DoneIcon from "@mui/icons-material/Done";
@@ -13,24 +13,49 @@ import DoneIcon from "@mui/icons-material/Done";
 import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import calendar from "dayjs/plugin/calendar";
+import axios from "axios";
+import { useRouter } from "next/router";
+import { Typography } from "@mui/material";
+import Avatar from "@mui/material/Avatar";
 dayjs.extend(calendar);
 dayjs.extend(localizedFormat);
 
 
 const socket = io(`${baseUrl}`);
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+// const fetcher = (url: string) => fetch(url).then((res) => res.json());
+export function stringToColor(string: string) {
+  let hash = 0;
+  let i;
+
+  /* eslint-disable no-bitwise */
+  for (i = 0; i < string.length; i += 1) {
+    hash = string.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  let color = "#";
+
+  for (i = 0; i < 3; i += 1) {
+    const value = (hash >> (i * 8)) & 0xff;
+    color += `00${value.toString(16)}`.slice(-2);
+  }
+  /* eslint-enable no-bitwise */
+
+  return color;
+}
+
 
 export default function NestedLayoutCandidateChats({ children }: any) {
-
+  const router = useRouter()
   const accountType = useSelector(
     (state: RootState) => state.account.accountType
   );
+  const dispatch = useDispatch()
   const refreshNewMsg = useSelector((state:RootState)=>state.refreshNewMsg.refreshNewMessage)
 
   const { mutate } = useSWRConfig();
   const [refreshOnline, setRefreshOnline] = useState("");
-  const id = useSelector((state: RootState) => state.session.id);
+  const user = useSelector((state: RootState) => state.session);
   useEffect(() => {
     socket.on("onlineUser", (data) => {
       setRefreshOnline(data);
@@ -38,15 +63,31 @@ export default function NestedLayoutCandidateChats({ children }: any) {
   }, [socket]);
 
   useEffect(() => {
-    mutate(`${baseUrl}/rooms/candidate/${id}`);
+    mutate([`${baseUrl}/rooms/candidate/${user.id}`,user.access_token,user.refresh_token]);
   }, [refreshOnline]);
 
   useEffect(()=>{
-    mutate(`${baseUrl}/rooms/candidate/${id}`)
+    mutate([`${baseUrl}/rooms/candidate/${user.id}`,user.access_token,user.refresh_token])
   },[refreshNewMsg])
 
 
-  const { data, error } = useSWR(`${baseUrl}/rooms/candidate/${id}`, fetcher);
+  // const { data, error } = useSWR(`${baseUrl}/rooms/candidate/${id}`, fetcher);
+  const { data, error } = useSWR([`${baseUrl}/rooms/candidate/${user.id}`,user.access_token,user.refresh_token],async ([url,access_token,refresh_token])=>
+    await axios.get(url,{ headers: { Authorization: "Bearer " + access_token } })
+    .then(res=>res.data)
+    .catch(async err=>{
+      if(err.request.status === 401){
+        await axios.post(`${baseUrl}/candidates/refresh`,{refresh_token})
+        .then(res=>{
+          dispatch(setSession({...user,access_token:res.data.access_token}))
+          if(!res.data.valid_access_token){
+            dispatch(removeSession())
+            router.push("/auth/signin")
+          }
+        })
+      }
+    })
+  );
 
   if (error) return <div>Failed to load</div>;
   if (!data) return <div>Loading...</div>;
@@ -62,28 +103,32 @@ export default function NestedLayoutCandidateChats({ children }: any) {
             <div style={{ position: "relative" }}>
             {item.recruiter.online && (
                 <div
+                className={styles.onlineIndicator}
                   style={{
                     position: "absolute",
-                    top: "3px",
+                    bottom: "3px",
                     right: "0px",
                     backgroundColor: "lawngreen",
                     height: "8px",
                     width: "8px",
                     borderRadius: "4px",
+                    zIndex: "3",
                   }}
                 ></div>
               )}
               {item.recruiter.image ? (
-                <img
-                  style={{
-                    width: "40px",
-                    height: "40px",
-                    borderRadius: "20px",
-                  }}
+                <Avatar
+                  alt={item.recruiter?.firstName}
                   src={`${baseUrl}${item.recruiter.image}`}
                 />
               ) : (
-                <AccountCircleIcon style={{ fontSize: "40px" }} />
+                <Avatar
+                  sx={{ bgcolor: stringToColor(item.recruiter?.firstName) }}
+                >
+                  {item.recruiter?.companyName
+                    ? item.recruiter?.companyName?.toUpperCase()[0]
+                    : item.recruiter?.firstName?.toUpperCase()[0]}
+                </Avatar>
               )}
             </div>
             <div className={styles.text}>
@@ -94,20 +139,31 @@ export default function NestedLayoutCandidateChats({ children }: any) {
                   justifyContent: "space-between",
                 }}
               >
-                <p className={styles.name}>{item.recruiter?.companyName
-                ? item.recruiter?.companyName
-                : item.recruiter?.firstName} </p>
-                <span
-                  style={{
+                <Typography
+                  variant="body1"
+                  component="div"
+                  className={styles.name}
+                  color="text.secondary"
+                  sx={{ textTransform: "capitalize" }}
+                >
+                  {" "}
+                  {item.recruiter?.companyName
+                    ? item.recruiter?.companyName
+                    : item.recruiter?.firstName}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  component="div"
+                  sx={{
                     fontWeight: "400",
-                    fontSize: "12px",
+                    fontSize: "10px",
                     whiteSpace: "nowrap",
                     width: "80px",
                     marginRight: "5px",
                   }}
                 >
                   {dayjs(item?.chats[0]?.dateCreated).format("LL")}
-                </span>
+                </Typography>
               </div>
               <div
                 style={{
@@ -116,7 +172,13 @@ export default function NestedLayoutCandidateChats({ children }: any) {
                   justifyContent: "space-between",
                 }}
               >
-                <p className={styles.lastMsg}>{item?.chats[0]?.message}</p>
+                <Typography
+                  variant="body2"
+                  component="div"
+                  className={styles.lastMsg}
+                >
+                  {item?.chats[0]?.message}
+                </Typography>
                 <span
                   style={{
                     width: "80px",

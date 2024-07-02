@@ -5,13 +5,15 @@ export type OpenType = {
   openContact:boolean
   openAddress:boolean
   openImage: boolean
+  openName:boolean
 };
 
 const initialState: OpenType = {
     openAbout:false,
     openContact:false,
     openAddress:false,
-    openImage:false
+    openImage:false,
+    openName:false
 };
 
 export const recruiterModalSlice = createSlice({
@@ -42,6 +44,12 @@ export const recruiterModalSlice = createSlice({
       setCloseImage: (state) => {
         state.openImage = false;
       },
+      setOpenName: (state) => {
+        state.openName= true;
+      },
+      setCloseName: (state) => {
+        state.openName = false;
+      },
   },
 });
 
@@ -54,7 +62,9 @@ export const {
   setOpenAddress,
   setCloseAddress,
   setOpenImage,
-  setCloseImage
+  setCloseImage,
+  setCloseName,
+  setOpenName,
 } = recruiterModalSlice.actions;
 
 export default recruiterModalSlice.reducer;

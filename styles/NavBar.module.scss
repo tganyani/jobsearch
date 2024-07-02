@@ -1,23 +1,24 @@
-.main{
-  position: relative;
   .container {
-    background-color: black;
-    opacity: 0.6;
+    background-color: #3e424b;
     display: flex;
     flex-flow: row nowrap;
     justify-content: space-around;
     align-items: center;
     height: 50px;
     padding: 10px;
+    height: fit-content;
     .logo {
       color: lawngreen;
       font-weight: 900;
       font-size: 1.2rem;
       flex: 1;
     }
-    .menu{
+    .menu {
       color: white;
       display: none;
+      &:hover {
+        border: 2px solid lawngreen;
+      }
     }
     .navLists {
       display: flex;
@@ -31,69 +32,103 @@
         flex-flow: row nowrap;
         justify-content: space-around;
         list-style: none;
-        li {
-          color: white ;
+        .link {
+          color: white;
           display: flex;
           flex-flow: row nowrap;
           justify-content: space-around;
           align-items: center;
-          p {
-            flex: 1;
-            &:hover::after {
-              content: "";
-              display: block;
-              height: 0.5px;
-              width: inherit;
-              background-color: lawngreen !important;
+
+          .iconContainer,
+          .pContainer {
+            display: flex;
+            flex-flow: row nowrap;
+            justify-content: center !important;
+            align-items: center;
+          }
+          &:hover {
+            .iconContainer {
+              .icon {
+                color: lawngreen;
+              }
+            }
+          }
+          .pContainer {
+            .p {
+              flex: 1;
+              &:hover::after {
+                content: "";
+                display: block;
+                height: 0.5px;
+                width: inherit;
+                background-color: lawngreen !important;
+              }
             }
           }
         }
       }
       .account {
         color: white;
-        position: relative;
         flex: 1;
         .dropDown {
-          width: 50px;
+          width: 100%;
           display: flex;
           flex-flow: row nowrap;
-          justify-content: space-around;
+          justify-content: right;
           align-items: center;
-          #dropDownIcon {
-            transform: rotate(-90deg);
+          #accountIcon {
+            // transform: rotate(-90deg);
+            color: grey;
+            opacity: 1 !important;
           }
         }
       }
+      
     }
+    
   }
-  .closeMenu{
-    display: none;
-  }
-  .toggleMenu{
-    background-color: black;
-    opacity: 0.6;
-    display: flex ;
-    flex-flow: row nowrap;
-    justify-content: center;
-    padding: 10px;
-    width: 90%;
-    .listToggle {
-      display: flex !important;
-      flex-flow: column nowrap;
-      justify-content: center;
+  .openMenu {
+    background-color: #3e424b;
+    position: absolute;
+    top: 70px;
+    width: 100% !important;
+    z-index: 3;
+    left: 0;
+    .link {
+      color: white;
+      display: flex;
+      flex-flow: row nowrap;
+      justify-content: center !important;
       align-items: center;
-      list-style: none;
-      width: 100%;
-      row-gap: 10px;
-      li {
-        color: white ;
+      margin-bottom: 15px;
+      .iconContainer,
+      .pContainer {
         display: flex;
         flex-flow: row nowrap;
-        justify-content: space-between !important;
+        column-gap: 20px;
         align-items: center;
-        width: 150px;
-        p {
-          flex: 1;
+      }
+
+      .iconContainer {
+        justify-content: flex-start;
+        flex: 2;
+        .icon {
+        }
+      }
+
+      &:hover {
+        .iconContainer {
+          .icon {
+            color: lawngreen;
+          }
+        }
+      }
+      .pContainer {
+        justify-content: flex-end;
+        flex: 3;
+        .p {
+          width: 85px !important;
+
           &:hover::after {
             content: "";
             display: block;
@@ -105,35 +140,33 @@
       }
     }
   }
-}
-
 
 @media only screen and (max-width: 700px) {
-  .main{
-    .container{
+    .container {
       height: 50px;
       align-items: center;
-      .menu{
-        display: block;
+      .menu {
+        display: flex;
+        padding: 2px;
+        border-radius: 6px;
       }
-      .navLists{
+      .navLists {
         flex: 1;
-        .account{
-          p{
-            position: relative;
-            right: 0 !important;
-            top: 0 !important;
-            text-align: center;
-          }
-          .dropDown{
+        .account {
+          // p{
+          //   position: relative;
+          //   right: 0 !important;
+          //   top: 0 !important;
+          //   text-align: center;
+          // }
+          .dropDown {
             width: 100%;
             justify-content: end;
           }
         }
-        .list{
+        .list {
           display: none !important;
         }
       }
+    }
   }
-  }
-}
