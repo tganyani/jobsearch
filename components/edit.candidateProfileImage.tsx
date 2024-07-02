@@ -113,7 +113,11 @@ export default function EditCandidateProfileImage({ prevPath }: Props) {
   return (
     <Dialog
       open={open}
-      onClose={() => dispatch(setCloseImage())}
+      onClose={() => {
+        dispatch(setCloseImage())
+        setFile(null);
+        setFilePreview("");
+      }}
       className={styles.container}
     >
       <DialogTitle>edit profile</DialogTitle>
@@ -124,30 +128,54 @@ export default function EditCandidateProfileImage({ prevPath }: Props) {
           name="file"
           types={fileTypes}
         />
-        {file && (
+        {file ? (
           <img
             src={filePreview}
+            alt=""
+            style={{ width: "120px", height: "120px", borderRadius: "60px" }}
+          />
+        ) : (
+          <img
+            src={`${baseUrl}${prevPath}`}
             alt=""
             style={{ width: "120px", height: "120px", borderRadius: "60px" }}
           />
         )}
       </DialogContent>
       <DialogActions>
-        {
-          prevPath&&<Button onClick={handleDeleteProfile} className={styles.btn} color="error">
-          {loading?<CircularProgress size="20px" color="error"/>:"delete"}
-        </Button>
-        }
+        {prevPath && !file && (
+          <Button
+            onClick={handleDeleteProfile}
+            color="error"
+            className={styles.btn}
+          >
+            {loading ? (
+              <CircularProgress size="20px" color="error" />
+            ) : (
+              "delete"
+            )}
+          </Button>
+        )}
         <Button
-          onClick={() => dispatch(setCloseImage())}
-          className={styles.btn}
+          onClick={() => {
+            dispatch(setCloseImage());
+            setFile(null);
+            setFilePreview("");
+          }}
           color="success"
+          className={styles.btn}
         >
           Cancel
         </Button>
-        {file&&<Button onClick={handleSubmit} className={styles.btn}>
-        {loading2?<CircularProgress size="20px" color="success"/>:"update"}
-        </Button>}
+        {file && (
+          <Button onClick={handleSubmit} className={styles.btn}>
+            {loading2 ? (
+              <CircularProgress size="20px" color="success" />
+            ) : (
+              "update"
+            )}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

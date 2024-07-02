@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@custom-react-hooks/use-click-outside": "^1.4.19",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
     "@fontsource/roboto": "^5.0.13",
@@ -37,6 +38,7 @@
     "react-hook-form": "^7.43.1",
     "react-material-ui-carousel": "^3.4.2",
     "react-redux": "^8.0.5",
+    "react-ripples": "^2.2.1",
     "redux-persist": "^6.0.0",
     "sass": "^1.58.1",
     "socket.io-client": "^4.6.1",

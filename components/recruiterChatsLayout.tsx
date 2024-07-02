@@ -12,9 +12,13 @@ import DoneIcon from "@mui/icons-material/Done";
 import { Typography } from "@mui/material";
 import Avatar from "@mui/material/Avatar";
 
+
+import { setRefreshMessage } from "@/store/slice/refreshNewMsgSlice";
+
 import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import calendar from "dayjs/plugin/calendar";
+import CircularProgress from "@mui/material/CircularProgress";
 dayjs.extend(calendar);
 dayjs.extend(localizedFormat);
 
@@ -40,6 +44,17 @@ export default function NestedLayoutRecruiterChats({ children }: any) {
   const dispatch = useDispatch();
   const [refreshOnline, setRefreshOnline] = useState("");
   const user = useSelector((state: RootState) => state.session);
+  useEffect(()=>{
+    const sendAllCandidateRooms = ()=>{
+      socket.emit("allRooms",{id:user.id,accountType})
+    }
+    sendAllCandidateRooms()
+  },[socket])
+  useEffect(()=>{
+    socket.on("roomMsg", (data) => {
+      dispatch(setRefreshMessage(data))
+    });
+  },[socket])
   useEffect(() => {
     socket.on("onlineUser", (data) => {
       setRefreshOnline(data);
@@ -75,7 +90,7 @@ export default function NestedLayoutRecruiterChats({ children }: any) {
         .catch(async (err) => {
           if (err.request.status === 401) {
             await axios
-              .post(`${baseUrl}/candidates/refresh`, { refresh_token })
+              .post(`${baseUrl}/recruiter/refresh`, { refresh_token })
               .then((res) => {
                 dispatch(
                   setSession({ ...user, access_token: res.data.access_token })
@@ -90,7 +105,18 @@ export default function NestedLayoutRecruiterChats({ children }: any) {
   );
 
   if (error) return <div>Failed to load</div>;
-  if (!data) return <div>Loading...</div>;
+  if (!data) return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "center",
+        marginTop: "70px",
+      }}
+    >
+      <CircularProgress sx={{ color: "lawngreen" }} size="20px" />
+    </div>
+  );
   return (
     <div className={styles.container}>
       <div className={styles.chatList}>
@@ -111,7 +137,6 @@ export default function NestedLayoutRecruiterChats({ children }: any) {
                     backgroundColor: "lawngreen",
                     height: "8px",
                     width: "8px",
-                    borderRadius: "4px",
                     zIndex: "3",
                   }}
                 ></div>

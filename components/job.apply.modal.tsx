@@ -5,6 +5,9 @@ import styles from "../styles/Modal.module.scss";
 import { useDispatch, useSelector } from "react-redux";
 import { setSession, removeSession } from "@/store/slice/sessionSlice";
 import { io } from "socket.io-client";
+import CircularProgress from "@mui/material/CircularProgress";
+import useMediaQuery from "@mui/material/useMediaQuery";
+
 
 import {
   Dialog,
@@ -14,15 +17,16 @@ import {
   DialogTitle,
   TextField,
   Button,
+  Alert,
 } from "@mui/material";
 import { RootState } from "@/store/store";
 import { useForm, SubmitHandler } from "react-hook-form";
 import axios from "axios";
 import { baseUrl } from "@/baseUrl";
 import { setCloseApply } from "@/store/slice/modalSlice";
+import Chip from "@mui/material/Chip";
+import { Typography } from "@mui/material";
 import useSWR from "swr";
-import AddIcon from "@mui/icons-material/Add";
-import ClearIcon from "@mui/icons-material/Clear";
 
 type Inputs = {
   message: string;
@@ -30,29 +34,36 @@ type Inputs = {
 
 interface JobApplyProp {
   jobId: number;
+  jobTitle: string;
+  firstName: string;
+  lastName: string;
   recruiter: {
     id: number;
     email: string;
   };
 }
 
-interface Letter {
-  id: number;
-  message: string;
-}
-
 const socket = io(`${baseUrl}`);
 
-export default function JobApply({ jobId, recruiter }: JobApplyProp) {
+export default function JobApply({
+  jobId,
+  jobTitle,
+  firstName,
+  lastName,
+  recruiter,
+}: JobApplyProp) {
   const router = useRouter();
   const accountType = useSelector(
     (state: RootState) => state.account.accountType
   );
   const { mutate } = useSWRConfig();
   const [openPrevDiv, setOpenPrevDiv] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [connectResponse, setConnectResponse] = useState<{message:string,connected:boolean}>({message:"",connected:false})
   const open = useSelector((state: RootState) => state.modal.openApply);
   const user = useSelector((state: RootState) => state.session);
   const email = useSelector((state: RootState) => state.session.email);
+  const matches = useMediaQuery("(max-width:600px)");
   const roomName =
     email < recruiter?.email
       ? "".concat(email, recruiter?.email)
@@ -65,36 +76,58 @@ export default function JobApply({ jobId, recruiter }: JobApplyProp) {
     reset,
   } = useForm<Inputs>();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
+    await setLoading(true);
     await axios
-        .patch(`${baseUrl}/vaccancy/connect/${jobId}`, { ...data, id: user.id }, {
+      .patch(
+        `${baseUrl}/vaccancy/connect/${jobId}`,
+        { ...data, id: user.id },
+        {
           headers: { Authorization: "Bearer " + user.access_token },
-        })
-        .then(async (res) => {
-         await dispatch(setCloseApply())
-         await  alert(res.data.message);
-        }).catch(async err=>{
-          if(err.request.status === 401){
-            await axios.post(`${baseUrl}/candidates/refresh`,{refresh_token:user.refresh_token})
-            .then(res=>{
-              dispatch(setSession({...user,access_token:res.data.access_token}))
-              if(!res.data.valid_access_token){
-                dispatch(removeSession())
-                router.push("/auth/signin")
-              }
+        }
+      )
+      .then(async (res) => {
+        
+        setConnectResponse({...res?.data})
+      })
+      .catch(async (err) => {
+        if (err.request.status === 401) {
+          await axios
+            .post(`${baseUrl}/candidates/refresh`, {
+              refresh_token: user.refresh_token,
             })
-          }
-        });
+            .then((res) => {
+              dispatch(
+                setSession({ ...user, access_token: res.data.access_token })
+              );
+              if (!res.data.valid_access_token) {
+                dispatch(removeSession());
+                router.push("/auth/signin");
+              }
+            });
+        }
+      });
     await socket.emit("createRoom", {
       candidateId: user.id,
       recruiterId: recruiter.id,
       name: roomName,
       message: data.message,
       accountType,
+      apply: true,
+      jobId,
+      jobTitle,
+      lastName,
+      firstName,
     });
+    socket.emit("newView", { candidateId: user.id });
+    setLoading(false);
+    setTimeout(()=>{
+      setConnectResponse({message:"",connected:false})
+      dispatch(setCloseApply());
+    },3000)
   };
   const { data, error } = useSWR(
     [
-      `${baseUrl}/vaccancy/letters/${user.id}`,
+      `${baseUrl}/candidates/letter/${user.id}`,
       user.access_token,
       user.refresh_token,
     ],
@@ -119,41 +152,19 @@ export default function JobApply({ jobId, recruiter }: JobApplyProp) {
         })
   );
 
-  const handleDeleteLetter = async (letterId: number) => {
-    await axios
-      await axios
-        .delete(`${baseUrl}/vaccancy/letters/${letterId}`, {
-          headers: { Authorization: "Bearer " + user.access_token },
-        })
-        .then((res) => {
-        }).catch(async err=>{
-          if(err.request.status === 401){
-            await axios.post(`${baseUrl}/candidates/refresh`,{refresh_token:user.refresh_token})
-            .then(res=>{
-              dispatch(setSession({...user,access_token:res.data.access_token}))
-              if(!res.data.valid_access_token){
-                dispatch(removeSession())
-                router.push("/auth/signin")
-              }
-            })
-          }
-        });
-    await mutate([
-      `${baseUrl}/vaccancy/letters/${user.id}`,
-      user.access_token,
-      user.refresh_token,
-    ]);
-  };
-
   return (
     <Dialog
       open={open}
       onClose={() => dispatch(setCloseApply())}
       className={styles.container}
       maxWidth="sm"
+      fullScreen={matches?true:false}
       fullWidth={true}
     >
       <DialogTitle>apply for a job</DialogTitle>
+      {connectResponse.message&&<Alert variant="filled" severity={connectResponse.connected?"success":"error"}>
+        {connectResponse.message} jiiiiiii
+      </Alert>}
       <DialogContent className={styles.content} style={{ padding: "5px" }}>
         <DialogContentText>Are you sure you want to apply?</DialogContentText>
         <TextField
@@ -185,28 +196,26 @@ export default function JobApply({ jobId, recruiter }: JobApplyProp) {
             insert previous letter
           </Button>
           <div className={openPrevDiv ? styles.letter : styles.closeLetter}>
-            {data?.length === 0 && (
-              <div>You don't have previous letters yet!</div>
+            {!data?.letter && (
+              <Typography variant="body1" component="div">
+                You don't have previous letters yet!
+              </Typography>
             )}
-            {error && <div>Error fetching data</div>}
-            {!data && <div>Loadind.......!</div>}
-            {data &&
-              data.map((item: Letter) => (
-                <div key={item.id} className={styles.card}>
-                  <AddIcon
-                    className={styles.add}
-                    onClick={() => {
-                      reset({ message: item.message });
-                      setOpenPrevDiv(false);
-                    }}
-                  />
-                  <ClearIcon
-                    className={styles.clear}
-                    onClick={() => handleDeleteLetter(item.id)}
-                  />
-                  {item.message}
-                </div>
-              ))}
+            <div>
+              <Chip
+                sx={{
+                  width: "100%",
+                  height: "auto",
+                  padding: "5px",
+                  "& .MuiChip-label": {
+                    display: "block",
+                    whiteSpace: "normal",
+                  },
+                }}
+                label={data?.letter}
+                onClick={() => reset({ message: data?.letter })}
+              />
+            </div>
           </div>
         </div>
       </DialogContent>
@@ -220,7 +229,11 @@ export default function JobApply({ jobId, recruiter }: JobApplyProp) {
           Cancel
         </Button>
         <Button onClick={handleSubmit(onSubmit)} className={styles.btn}>
-          apply
+          {loading ? (
+            <CircularProgress sx={{ color: "lawngreen" }} size="20px" />
+          ) : (
+            "apply"
+          )}
         </Button>
       </DialogActions>
     </Dialog>

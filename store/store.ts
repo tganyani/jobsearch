@@ -7,19 +7,21 @@ import { persistReducer } from 'redux-persist'
 import modalReducer from './slice/modalSlice'
 import recruiterModalReducer from './slice/recruiterModalSlice'
 import refreshNewMsgReducer from './slice/refreshNewMsgSlice';
+import unReadChatsReducer from './slice/chatLenghtSlice'
 
 const reducers = combineReducers({
     account: accountReducer,
     session: sessionReducer,
     modal:modalReducer,
     recruiterModal:recruiterModalReducer,
-    refreshNewMsg:refreshNewMsgReducer
+    refreshNewMsg:refreshNewMsgReducer,
+    unreadChats:unReadChatsReducer
   });
 
   const persistConfig = {
     key: 'root',
     storage,
-    blacklist: ['modal','recruiterModal']
+    blacklist: ['modal','recruiterModal','unreadChats','refreshNewMsg']
   };
   const persistedReducer = persistReducer(persistConfig, reducers);
 

@@ -5,6 +5,13 @@
     align-items: center;
     min-height: 80vh;
     .sub {
+      .top1 {
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        justify-content: center;
+        margin-top: 20px;
+      }
       margin-top: 30px;
       margin-bottom: 30px;
       padding-left: 10%;
@@ -13,10 +20,38 @@
       flex-flow: column nowrap;
       justify-content: center;
       row-gap: 20px;
-      border: 1px solid rgb(203, 193, 193) ;
-      &:hover{
-          border-color: grey;
+      box-shadow: 0 0 1px grey;
+    border-radius: 20px;
+      // &:hover{
+      //     border-color: grey;
+      // }
+      .text{
+        width: 300px;
       }
     }
   }
   
+  @media only screen and (max-width: 600px) {
+    .container{
+      .sub{
+        width: 60%;
+        padding: 5%;
+        .text{
+          width: 100%;
+        }
+      }
+    }
+  
+  }
+  @media only screen and (max-width: 450px) {
+    .container{
+      .sub{
+        width: 80%;
+        padding: 5%;
+        .text{
+          width: 100%;
+        }
+      }
+    }
+  
+  }

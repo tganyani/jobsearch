@@ -1,5 +1,4 @@
 import { useSWRConfig } from "swr";
-import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -31,33 +30,49 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
 
+import { createRipples } from "react-ripples";
 import Pagination from "@mui/material/Pagination";
 import axios from "axios";
 import { io } from "socket.io-client";
 import { nanoid } from "nanoid";
 import { Typography } from "@mui/material";
+import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
+import Tooltip from "@mui/material/Tooltip";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import Chip from "@mui/material/Chip";
+import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
+
+import { jobFields } from "./recruiter/vaccancy";
 
 const socket = io(`${baseUrl}`);
+
+export const MyRipple = createRipples({
+  color: "lawngreen",
+  during: 2200,
+});
 
 export default function Home() {
   const { mutate } = useSWRConfig();
   const [jobId, setJobId] = useState<number | any>();
+  const [jobTitle, setJobTitle] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [title, setTitle] = useState<string>("");
   const [country, setCountry] = useState<string>("");
   const [city, setCity] = useState<string>("");
-  const [condition, setCondition] = useState<string>("");
+  const [field, setField] = useState<string>("all");
   const [refreshNewJobs, setRefreshNewJobs] = useState("");
+  const [refreshNewView, setRefreshNewView] = useState("");
   const [loading, setLoading] = useState<Boolean>(false);
+  const [loading2, setLoading2] = useState<Boolean>(false);
   const [recruiter, setRecruiter] = useState<
     { id: number; email: string } | any
   >();
   const [TabValue, setTabValue] = useState(0);
+  const matches = useMediaQuery("(max-width:600px)");
 
   const dispatch = useDispatch();
   const router = useRouter();
-  const user = useSelector((state) => state.session);
-  const position = useSelector((state: RootState) => state.session.position);
+  const user = useSelector((state: RootState) => state.session);
   const accountType = useSelector(
     (state: RootState) => state.account.accountType
   );
@@ -66,11 +81,33 @@ export default function Home() {
     socket.on("refreshJobs", (data) => {
       setRefreshNewJobs(data);
     });
+    socket.on("refreshNewView", (data) => {
+      setRefreshNewView(data);
+    });
   }, [socket]);
 
   useEffect(() => {
-    mutate([`${baseUrl}/vaccancy`, user.access_token, user.refresh_token]);
+    mutate([
+      `${baseUrl}/vaccancy?page=${page}&title=${title}&city=${city}&country=${country}&field=${field}`,
+      user.access_token,
+      user.refresh_token,
+    ]);
   }, [refreshNewJobs]);
+  // refresh on new view
+  useEffect(() => {
+    mutate([
+      `${baseUrl}/vaccancy?page=${page}&title=${title}&city=${city}&country=${country}&field=${field}`,
+      user.access_token,
+      user.refresh_token,
+    ]);
+  }, [refreshNewView, page, title]);
+  useEffect(() => {
+    mutate([
+      `${baseUrl}/vaccancy?page=${page}&title=${title}&city=${city}&country=${country}&field=${field}`,
+      user.access_token,
+      user.refresh_token,
+    ]);
+  }, [title, city, country, field]);
 
   const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
@@ -103,11 +140,12 @@ export default function Home() {
         }
       });
     await mutate([
-      `${baseUrl}/vaccancy`,
+      `${baseUrl}/vaccancy?page=${page}&title=${title}&city=${city}&country=${country}&field=${field}`,
       user.access_token,
       user.refresh_token,
     ]);
   };
+
   const handleLike = async (Id: number) => {
     await axios
       .patch(
@@ -136,10 +174,40 @@ export default function Home() {
         }
       });
     await mutate([
-      `${baseUrl}/vaccancy`,
+      `${baseUrl}/vaccancy?page=${page}&title=${title}&city=${city}&country=${country}&field=${field}`,
       user.access_token,
       user.refresh_token,
     ]);
+  };
+  const handleClickReadMore = async (jobId: number) => {
+    await router.push(`/${jobId}`);
+    await axios
+      .patch(
+        `${baseUrl}/vaccancy/view/${user.id}`,
+        { id: jobId },
+        {
+          headers: { Authorization: "Bearer " + user.access_token },
+        }
+      )
+      .then((res) => {})
+      .catch(async (err) => {
+        if (err.request.status === 401) {
+          await axios
+            .post(`${baseUrl}/candidates/refresh`, {
+              refresh_token: user.refresh_token,
+            })
+            .then((res) => {
+              dispatch(
+                setSession({ ...user, access_token: res.data.access_token })
+              );
+              if (!res.data.valid_access_token) {
+                dispatch(removeSession());
+                router.push("/auth/signin");
+              }
+            });
+        }
+      });
+    await socket.emit("newView", { candidateId: user.id });
   };
   const handleCandidateGuest = async () => {
     const email = "employer1@gmail.com";
@@ -171,8 +239,12 @@ export default function Home() {
                     email: res.data.email,
                     access_token: res.data.access_token,
                     id: res.data.id,
-                    position: res.data.position,
+                    position: res.data?.position,
+                    city: res.data?.city,
+                    country: res.data?.country,
                     refresh_token: res.data.refresh_token,
+                    firstName: res.data.firstName,
+                    lastName: res.data.lastName,
                   })
                 );
                 setLoading(false);
@@ -197,7 +269,7 @@ export default function Home() {
 
   const handleRecruiterGuest = async () => {
     const email = "user1@gmail.com";
-    setLoading(true);
+    setLoading2(true);
     const unique = await nanoid(4);
     const recruiter = {
       firstName: `guest${unique}`,
@@ -225,10 +297,14 @@ export default function Home() {
                     access_token: res.data.access_token,
                     id: res.data.id,
                     position: res.data.position,
+                    city: res.data?.city,
+                    country: res.data?.country,
                     refresh_token: res.data.refresh_token,
+                    firstName: res.data.firstName,
+                    lastName: res.data.lastName,
                   })
                 );
-                setLoading(false);
+                setLoading2(false);
                 socket.emit("online", {
                   id: res.data.id,
                   accountType: "recruiter",
@@ -249,7 +325,11 @@ export default function Home() {
   };
 
   const { data, error } = useSWR(
-    [`${baseUrl}/vaccancy`, user.access_token, user.refresh_token],
+    [
+      `${baseUrl}/vaccancy?page=${page}&title=${title}&city=${city}&country=${country}&field=${field}`,
+      user.access_token,
+      user.refresh_token,
+    ],
     async ([url, access_token, refresh_token]) =>
       await axios
         .get(url, { headers: { Authorization: "Bearer " + access_token } })
@@ -274,7 +354,19 @@ export default function Home() {
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
-
+  const toolTipData: { id: number; title: string }[] = [
+    { id: 1, title: "Vague Description" },
+    { id: 2, title: "Just not interested" },
+    { id: 3, title: "Job posted too long ago" },
+    { id: 4, title: "Too Many Applicants" },
+  ];
+  const toolTipStyle = {
+    padding: "6px",
+    borderRadius: "10px",
+    "&:hover": {
+      backgroundColor: "grey",
+    },
+  };
   const inputStyle = {
     // Root class for the input field
     "& .MuiOutlinedInput-root": {
@@ -303,10 +395,15 @@ export default function Home() {
   };
 
   if (error && user.access_token) return <div>Failed to load</div>;
-  if (!data && user.access_token) return <CircularProgress />;
-  return user.access_token ? (
+  return  user.access_token ? (
     <div className={styles.container}>
-      <JobApply jobId={jobId} recruiter={recruiter} />
+      <JobApply
+        jobId={jobId}
+        jobTitle={jobTitle}
+        firstName={user.firstName}
+        lastName={user.lastName}
+        recruiter={recruiter}
+      />
       <div className={styles.searchBar}>
         <SearchIcon sx={{ color: "lawngreen", fontSize: "20px" }} />
         <div className={styles.inputs}>
@@ -317,6 +414,7 @@ export default function Home() {
             className={styles.inputText}
             onChange={(e) => setTitle(e.target.value)}
             sx={inputStyle}
+            value={title}
           />
           <TextField
             id="standard-basic"
@@ -326,6 +424,7 @@ export default function Home() {
             className={styles.inputText}
             onChange={(e) => setCountry(e.target.value)}
             sx={inputStyle}
+            value={country}
           />
           <TextField
             id="standard-basic"
@@ -334,18 +433,24 @@ export default function Home() {
             className={styles.inputText}
             onChange={(e) => setCity(e.target.value)}
             sx={inputStyle}
+            value={city}
           />
           <TextField
             select
             type="text"
-            label="job condition"
+            label="job sector or field"
             size="small"
             className={styles.inputText}
-            onChange={(e) => setCondition(e.target.value)}
+            onChange={(e) => setField(e.target.value)}
             sx={inputStyle}
+            value={field}
           >
-            <MenuItem value="office">in office </MenuItem>
-            <MenuItem value="remote">remote </MenuItem>
+            <MenuItem value="all">all</MenuItem>
+            {jobFields.map((field: { id: number | any; title: string }) => (
+              <MenuItem id={field.id} value={field.title}>
+                {field.title}{" "}
+              </MenuItem>
+            ))}
           </TextField>
         </div>
       </div>
@@ -360,7 +465,6 @@ export default function Home() {
               style: { background: "lawngreen" },
             }}
           >
-            {position}
             <Tab
               sx={{
                 textTransform: "capitalize",
@@ -370,7 +474,11 @@ export default function Home() {
                 },
               }}
               label="All Jobs"
-              onClick={() => setTitle("")}
+              onClick={() => {
+                setTitle("");
+                setCity("");
+                setCountry("");
+              }}
             />
             <Tab
               sx={{
@@ -381,43 +489,49 @@ export default function Home() {
                 },
               }}
               label="My Jobs"
-              onClick={() => setTitle(position)}
+              onClick={() => {
+                setTitle(user?.position?.trim());
+                setCity(user?.city?.trim());
+                setCountry(user?.country?.trim());
+              }}
             />
           </Tabs>
         </div>
-        <div className={styles.jobContainer}>
-          {data
-            .filter((item: any) =>
-              item.title.toLowerCase().includes(title.toLowerCase())
-            )
-            .filter((item: any) =>
-              item.country.toLowerCase().includes(country.toLowerCase())
-            )
-            .filter((item: any) =>
-              item.city.toLowerCase().includes(city.toLowerCase())
-            )
-            .filter((item: any) =>
-              item.condition.toLowerCase().includes(condition.toLowerCase())
-            )
-            .slice((page - 1) * 6, page * 6)
-            .map((job: any) => (
-              <div className={styles.jobCard} key={job.id}>
+        {!data && user.access_token ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+              marginTop: "70px",
+            }}
+          >
+            <CircularProgress sx={{ color: "lawngreen" }} size="20px" />
+          </div>
+        ) : (
+          <div className={styles.jobContainer}>
+            {data.map((job: any) => (
+              <div
+                className={styles.jobCard}
+                key={job.id}
+                style={{
+                  backgroundColor:
+                    job?.viewedCandidates?.filter(
+                      (jb: any) => jb.candidateId === user.id
+                    ).length > 0
+                      ? "white"
+                      : "#F8F8FF",
+                }}
+              >
                 <div className={styles.cardHeader}>
                   <Typography
                     variant="body1"
                     component="div"
                     className={styles.jobTitle}
                   >
-                      {job.title}
+                    {job.title}
                   </Typography>
-                  <Typography
-                    color="text.secondary"
-                    variant="body2"
-                    component="div"
-                    className={styles.date}
-                  >
-                    {dayjs(job.dateUpdated).fromNow()}
-                  </Typography>
+
                   <div className={styles.headerIcons}>
                     <div className={styles.icons}>
                       <div className={styles.views}>
@@ -430,7 +544,7 @@ export default function Home() {
                           component="div"
                           sx={{ fontSize: "12px" }}
                         >
-                          2
+                          {job?.viewedCandidates.length}
                         </Typography>
                       </div>
                       <div className={styles.applicants}>
@@ -460,7 +574,7 @@ export default function Home() {
                   </Typography>
                   <ul className={styles.skills}>
                     <Typography
-                      color="text.secondary"
+                      color="text.primary"
                       variant="body2"
                       component="div"
                       className={styles.skillsH}
@@ -481,18 +595,35 @@ export default function Home() {
                     ))}
                   </ul>
                 </div>
-                <Button
-                  sx={{
-                    fontWeight: "300",
-                    boxShadow: 0,
-                    textTransform: "lowercase",
-                    padding: "1px",
-                    color: "lawngreen",
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexFlow: "row nowrap",
+                    justifyContent: "space-between",
                   }}
-                  onClick={() => router.push(`/${job.id}`)}
                 >
-                  read more ...
-                </Button>
+                  <Button
+                    sx={{
+                      fontWeight: "300",
+                      boxShadow: 0,
+                      textTransform: "lowercase",
+                      padding: "1px",
+                      color: "lawngreen",
+                    }}
+                    onClick={() => handleClickReadMore(Number(job.id))}
+                  >
+                    read more ...
+                  </Button>
+                  <Typography
+                    color="text.secondary"
+                    variant="body2"
+                    component="div"
+                    className={styles.date}
+                  >
+                    {dayjs(job.dateUpdated).fromNow()}
+                  </Typography>
+                </div>
                 <div className={styles.footer}>
                   <div className={styles.sub1}>
                     <div className={styles.image}>
@@ -500,7 +631,7 @@ export default function Home() {
                         color="text.secondary"
                         variant="body2"
                         component="div"
-                        sx={{fontSize:"12px"}}
+                        sx={{ fontSize: "12px" }}
                       >
                         {job.companyName}
                       </Typography>
@@ -514,7 +645,7 @@ export default function Home() {
                         color="text.secondary"
                         variant="body2"
                         component="div"
-                        sx={{fontSize:"12px"}}
+                        sx={{ fontSize: "12px" }}
                       >
                         {job.city},{job.country}
                       </Typography>
@@ -523,12 +654,12 @@ export default function Home() {
                       <HomeWorkIcon
                         style={{ fontSize: "12px", color: "lawngreen" }}
                       />
-                      
+
                       <Typography
                         color="text.secondary"
                         variant="body2"
                         component="div"
-                        sx={{fontSize:"12px"}}
+                        sx={{ fontSize: "12px" }}
                       >
                         {job.condition}
                       </Typography>
@@ -549,6 +680,7 @@ export default function Home() {
                         style={{ height: "25px", textTransform: "lowercase" }}
                         onClick={() => {
                           setJobId(job.id);
+                          setJobTitle(job.title);
                           dispatch(setOpenApply());
                           setRecruiter(job.recruiter);
                         }}
@@ -556,7 +688,7 @@ export default function Home() {
                           fontWeight: "300",
                           boxShadow: 0,
                           textTransform: "lowercase",
-                          backgroundColor:"lawngreen"
+                          backgroundColor: "lawngreen",
                         }}
                         disabled={
                           job?.candidatesApplied
@@ -583,31 +715,94 @@ export default function Home() {
                       job.likedCandidates?.filter(
                         (item: any) => item.candidateId === user.id
                       ).length > 0 && (
-                        <FavoriteBorderIcon
-                          className={styles.liked}
-                          onClick={() => handleDislike(job.id)}
-                        />
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            borderRadius: 25,
+                            overflow: "hidden",
+                          }}
+                        >
+                          <MyRipple>
+                            <FavoriteBorderIcon
+                              sx={{ color: "grey" }}
+                              className={styles.liked}
+                              onClick={() => handleDislike(job.id)}
+                            />
+                          </MyRipple>
+                        </div>
                       )}
                     {accountType === "candidate" &&
                       !job.likedCandidates?.filter(
                         (item: any) => item.candidateId === user.id
                       ).length && (
-                        <FavoriteBorderIcon
-                          className={styles.notLiked}
-                          onClick={() => handleLike(job.id)}
-                        />
+                        <div
+                          style={{
+                            display: "inline-flex",
+                            borderRadius: 25,
+                            overflow: "hidden",
+                          }}
+                        >
+                          <MyRipple>
+                            <FavoriteBorderIcon
+                              sx={{ color: "grey" }}
+                              className={styles.notLiked}
+                              onClick={() => handleLike(job.id)}
+                            />
+                          </MyRipple>
+                        </div>
                       )}
+
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        borderRadius: 25,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <MyRipple>
+                        <Tooltip
+                          title={
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                rowGap: "10px",
+                              }}
+                            >
+                              {toolTipData.map(
+                                (toolD: { id: number; title: string }) => (
+                                  <Typography
+                                    sx={toolTipStyle}
+                                    component="span"
+                                    variant="body2"
+                                    key={toolD.id}
+                                    id={toolD.title}
+                                  >
+                                    {toolD.title}
+                                  </Typography>
+                                )
+                              )}
+                            </div>
+                          }
+                          placement="top"
+                          arrow
+                        >
+                          <FlagOutlinedIcon sx={{ color: "grey" }} />
+                        </Tooltip>
+                      </MyRipple>
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
-        </div>
-        <Pagination
-          count={Math.floor(data.length / 6) + 1}
-          page={page}
-          onChange={handleChange}
-          color="primary"
-        />
+            <Pagination
+              count={page + 1} //Math.floor(data.length / 6)
+              page={page}
+              onChange={handleChange}
+              color="primary"
+            />
+          </div>
+        )}
       </div>
     </div>
   ) : (
@@ -627,9 +822,14 @@ export default function Home() {
           alignItems: "center",
           justifyContent: "center",
           rowGap: "30px",
+          boxShadow: "0 0 1px grey",
+          padding: matches ? "5%" : "30px",
+          borderRadius: "20px",
         }}
       >
-        <p>You are not logged in</p>
+        <Typography component="div" variant="body2">
+          You are not logged in
+        </Typography>
         <div
           style={{
             display: "flex",
@@ -639,75 +839,50 @@ export default function Home() {
             rowGap: "30px",
           }}
         >
-          <Button
-            variant="contained"
+          <Chip
+            label="continue as a candidate"
+            deleteIcon={<ArrowRightAltIcon style={{color:"#eeeeee"}}/>}
+            onDelete={()=>console.log("")}
             onClick={() => {
               dispatch(setAccountType("candidate"));
               router.push("/auth/signin");
             }}
             sx={{
-              fontWeight: "300",
-              boxShadow: 0,
-              padding: "10px",
-              height: "30px",
-              textTransform: "lowercase",
-              backgroundColor: "lawngreen",
+              backgroundColor: "limegreen",
+              color: "white",
+              "&:hover": { color: "black" },
               width: "100%",
             }}
-          >
-            continue as a candidate
-          </Button>
-          <Button
-            variant="contained"
+          />
+          <Chip
+            label="continue as a recruiter"
+            deleteIcon={<ArrowRightAltIcon style={{color:"#eeeeee"}}/>}
+            onDelete={()=>console.log("")}
             onClick={() => {
               dispatch(setAccountType("recruiter"));
               router.push("/auth/signin");
             }}
             sx={{
-              fontWeight: "300",
-              boxShadow: 0,
-              padding: "10px",
-              height: "30px",
-              textTransform: "lowercase",
-              backgroundColor: "lawngreen",
+              backgroundColor: "limegreen",
+              color: "white",
+              "&:hover": { color: "black" },
               width: "100%",
             }}
-          >
-            continue as a recruiter
-          </Button>
-          <Button
-            variant="contained"
-            sx={{
-              fontWeight: "300",
-              boxShadow: 0,
-              padding: "10px",
-              height: "30px",
-              textTransform: "lowercase",
-              backgroundColor: "lawngreen",
-              width: "100%",
-              borderRadius: "15px",
-            }}
+          />
+          <Chip
+            variant="outlined"
+            label= {loading?<CircularProgress size="20px" style={{color:"limegreen"}}/>:"login as guest candidate"}
             onClick={handleCandidateGuest}
-          >
-            login as guest candidate
-          </Button>
-          <Button
-            variant="contained"
-            sx={{
-              fontWeight: "300",
-              boxShadow: 0,
-              padding: "10px",
-              height: "30px",
-              textTransform: "lowercase",
-              backgroundColor: "lawngreen",
-              width: "100%",
-              borderRadius: "15px",
-            }}
+            sx={{borderColor:"limegreen","&:hover":{color:"grey"},width:"100%"}}
+            clickable={!loading&&!loading2}
+          />
+          <Chip
+            variant="outlined"
+            label={loading2?<CircularProgress size="20px" style={{color:"limegreen"}}/>:"login as guest recruiter"}
             onClick={handleRecruiterGuest}
-          >
-            login as guest recruiter
-          </Button>
-          {loading && <CircularProgress />}
+            sx={{borderColor:"limegreen","&:hover":{color:"grey"},width:"100%"}}
+            clickable={!loading2&&!loading}
+          />
         </div>
       </div>
     </div>

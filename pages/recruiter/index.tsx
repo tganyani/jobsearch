@@ -30,6 +30,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import WebIcon from "@mui/icons-material/Web";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import TelegramIcon from "@mui/icons-material/Telegram";
+import CircularProgress from "@mui/material/CircularProgress";
 
 // const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const iconStyle = {
@@ -74,7 +75,16 @@ export default function RecruiterProfile() {
   );
 
   if (error) return <div>Failed to load</div>;
-  if (!data) return <div>Loading...</div>;
+  if (!data) return <div
+  style={{
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: "70px",
+  }}
+>
+  <CircularProgress sx={{ color: "lawngreen" }} size="20px" />
+</div>
 
   return (
     <div className={styles.container}>

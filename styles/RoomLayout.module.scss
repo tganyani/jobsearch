@@ -20,6 +20,12 @@
         overflow: hidden;
         min-height: 50px;
         color: grey;
+        column-gap: 10px;
+        .onlineIndicator{
+          // animation: ripple 1.2s infinite ease-in-out;
+          border: solid white 2px;
+          border-radius: 6px;
+        }
         &:hover {
           opacity: 0.6;
         }
@@ -56,11 +62,14 @@
         overflow: hidden;
         min-height: 50px;
         color: grey;
+        column-gap: 10px;
         &:hover {
           opacity: 0.6;
         }
         .onlineIndicator{
-          animation: ripple 1.2s infinite ease-in-out;
+          // animation: ripple 1.2s infinite ease-in-out;
+          border: solid white 2px;
+          border-radius: 6px;
         }
         .text {
           width: inherit;
@@ -85,16 +94,16 @@
       }
     }
   }
-  @keyframes ripple {
-    0%{
-      transform: scale(.8);
-      opacity: 1;
-    }
-    100%{
-      transform: scale(2.4);
-      opacity: 0;
-    }
-  }
+  // @keyframes ripple {
+  //   0%{
+  //     transform: scale(.8);
+  //     opacity: 1;
+  //   }
+  //   100%{
+  //     transform: scale(2.4);
+  //     opacity: 0;
+  //   }
+  // }
   @media only screen and (max-width: 600px) {
     .container{
       .chatList{
