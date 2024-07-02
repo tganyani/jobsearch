@@ -74,6 +74,8 @@
           flex-flow: row nowrap;
           align-items: center;
           justify-content: space-between;
+          background-color: #eeeeee;
+          color: grey;
         }
       }
     }
@@ -82,6 +84,19 @@
       flex-flow: row nowrap;
       align-items: center;
       column-gap: 70px;
+      .notLiked{
+        transition: all 1s ease-in-out 0.5s;
+        &:hover{
+          font-size: 30px;
+        }
+      }
+      .liked{
+        color: lawngreen;
+        transition: all 1s ease-in-out 0.5s;
+        &:hover{
+          font-size: 30px;
+        }
+      }
     }
   }
 }

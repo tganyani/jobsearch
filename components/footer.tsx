@@ -1,5 +1,6 @@
 import TelegramIcon from "@mui/icons-material/Telegram";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import { Typography } from "@mui/material";
 
 
 export default function Footer() {
@@ -27,8 +28,9 @@ export default function Footer() {
         }}
       >
         <li>
-          developed by <span style={{ fontWeight: "700" }}>Tganyani </span>, a
-          student at Rudn
+          
+          <Typography variant="body2" component="div">developed by a<span style={{ fontWeight: "700" }}>   Zim Student</span>, at Rudn</Typography>
+         
         </li>
         <li>
           <a
@@ -40,8 +42,9 @@ export default function Footer() {
               alignItems: "center",
             }}
           >
-            linkedIn
-            <LinkedInIcon />
+            
+            <Typography variant="body2" component="div" sx={{color:"white","&:hover":{color:"lawngreen"}}}>linkedIn</Typography>
+            <LinkedInIcon sx={{color:"#0A66C2"}}/>
           </a>
         </li>
         <li>
@@ -54,8 +57,9 @@ export default function Footer() {
               alignItems: "center",
             }}
           >
-            Contact us
-            <TelegramIcon />
+           
+            <Typography variant="body2" component="div" sx={{color:"white","&:hover":{color:"lawngreen"}}}> contact us</Typography>
+            <TelegramIcon sx={{color:"#27A7E7"}}/>
           </a>
         </li>
         <li>
@@ -68,11 +72,11 @@ export default function Footer() {
               alignItems: "center",
             }}
           >
-            Subscribe TeleBot
-            <TelegramIcon />
+            <Typography variant="body2" component="div" sx={{color:"white","&:hover":{color:"lawngreen"}}}>  subscribe TeleBot</Typography>
+            <TelegramIcon sx={{color:"#24A1DE"}}/>
           </a>
         </li>
-        <li>Tgb &copy; 2023</li>
+        <li><Typography variant="body2" component="div" sx={{color:"white"}}><span style={{color:"lawngreen"}}>Imisebenzi</span> &copy; 2024</Typography></li>
       </ul>
     </div>
   );

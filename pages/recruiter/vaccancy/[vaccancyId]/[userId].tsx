@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { RootState } from "@/store/store";
 import { baseUrl } from "@/baseUrl";
@@ -50,9 +50,13 @@ export default function ViewCandidate() {
   const [enlarge, setEnlarge] = useState<boolean>(false);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [jobTopropose, setJobTopropose] = useState<any>();
   const recruiterId = useSelector((state: RootState) => state.session.id);
   const user = useSelector((state: RootState) => state.session);
   const dispatch = useDispatch();
+  const accountType = useSelector(
+    (state: RootState) => state.account.accountType
+  );
   const candidateId = router.query.userId;
   const vaccancyId = router.query.vaccancyId;
 
@@ -62,6 +66,33 @@ export default function ViewCandidate() {
   const isTablet = useMediaQuery(theme.breakpoints.down("md"));
   // Determine the chunk size based on device
   const chunkSize = isTablet ? (isMobile ? 1 : 2) : 3;
+  useEffect(() => {
+    const fetchJob = async () => {
+      await axios
+        .get(`${baseUrl}/vaccancy/${vaccancyId}`, {
+          headers: { Authorization: "Bearer " + user.access_token },
+        })
+        .then((res) => setJobTopropose(res.data))
+        .catch(async (err) => {
+          if (err.request.status === 401) {
+            await axios
+              .post(`${baseUrl}/recruiters/refresh`, {
+                refresh_token: user.refresh_token,
+              })
+              .then((res) => {
+                dispatch(
+                  setSession({ ...user, access_token: res.data.access_token })
+                );
+                if (!res.data.valid_access_token) {
+                  dispatch(removeSession());
+                  router.push("/auth/signin");
+                }
+              });
+          }
+        });
+    };
+    fetchJob();
+  }, []);
 
   const { data, error } = useSWR(
     [
@@ -89,9 +120,14 @@ export default function ViewCandidate() {
           }
         })
   );
+  const roomName =
+    data?.email < user?.email
+      ? "".concat(data?.email, user?.email)
+      : "".concat(user?.email, data?.email);
 
   const handleProposeCandidate = async () => {
     setLoading(true);
+
     await axios
       .post(
         `${baseUrl}/vaccancy/propose/${vaccancyId}`,
@@ -108,6 +144,18 @@ export default function ViewCandidate() {
         await socket.emit("sendCandidateProposal", {
           chatId: data?.telegram?.chatId,
           firstName: data?.telegram?.firstName,
+          vaccancyId,
+        });
+        await socket.emit("createRoom", {
+          candidateId,
+          recruiterId: user.id,
+          name: roomName,
+          message: `Hello ${data?.firstName} you have received a job proposal for this position https://jobsearch-lemon.vercel.app/${vaccancyId}`,
+          accountType,
+          propose: true,
+          vaccancyId,
+          jobTitle: jobTopropose?.title,
+          companyName: jobTopropose?.companyName,
         });
         await mutate([
           `${baseUrl}/candidates/${candidateId}`,
@@ -338,7 +386,9 @@ export default function ViewCandidate() {
               </Carousel>
               <div className={styles.link}>
                 <a href={item.link}>
-                  <OpenInNewIcon sx={{ color: "lawngreen" ,fontSize:"20px"}} />
+                  <OpenInNewIcon
+                    sx={{ color: "lawngreen", fontSize: "20px" }}
+                  />
                 </a>
               </div>
             </div>
@@ -361,22 +411,22 @@ export default function ViewCandidate() {
       </div>
       <div className={styles.contacts}>
         <Typography variant="h6" component="div">
-        contacts
+          contacts
         </Typography>
         <div className={styles.sub}>
-        {
-            data?.contacts?.phone&&<Chip
-            variant="outlined"
-            size="small"
-            avatar={
-              <Avatar sx={{ backgroundColor: "#eeeeee" }}>
-                <CallIcon sx={{ color: "#00FF00", fontSize: "15px" }} />
-              </Avatar>
-            }
-            label={data?.contacts?.phone}
-          />
-          }
-          
+          {data?.contacts?.phone && (
+            <Chip
+              variant="outlined"
+              size="small"
+              avatar={
+                <Avatar sx={{ backgroundColor: "#eeeeee" }}>
+                  <CallIcon sx={{ color: "#00FF00", fontSize: "15px" }} />
+                </Avatar>
+              }
+              label={data?.contacts?.phone}
+            />
+          )}
+
           <Chip
             size="small"
             variant="outlined"

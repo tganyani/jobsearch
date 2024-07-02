@@ -11,7 +11,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import dayjs from "dayjs";
 import HomeWorkIcon from "@mui/icons-material/HomeWork";
 import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress"
 import { Avatar } from "@mui/material";
 import Chip from "@mui/material/Chip";
 import { RootState } from "@/store/store";
@@ -94,7 +94,16 @@ export default function JobPreview() {
   }, [refreshJobUpdate]);
 
   if (error) return <div>Failed to load</div>;
-  if (!data) return <div>Loading...</div>;
+  if (!data) return <div
+  style={{
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: "70px",
+  }}
+>
+  <CircularProgress sx={{ color: "lawngreen" }} size="20px" />
+</div>;
   return (
     <div className={styles.container}>
       <div className={styles.job}>
@@ -103,9 +112,7 @@ export default function JobPreview() {
             <Typography variant="body1" component="div">
               {data?.title}
             </Typography>
-            <Typography variant="body2" color="GrayText" component="div">
-              posted ,{dayjs(data.dateUpdated).fromNow()}
-            </Typography>
+            
             <Typography variant="body1" component="div">
               <span style={{ color: "lawngreen" }}>$</span>
               {data.salary}
@@ -180,44 +187,48 @@ export default function JobPreview() {
           <div className={styles.sub}>
             <Chip
               className={styles.icons}
+              size="small"
               avatar={
-                <Avatar sx={{ backgroundColor: "lawngreen" }}>
-                  <VisibilityIcon sx={{ color: "white" }} />
+                <Avatar sx={{ backgroundColor: "#eeeeee" }}>
+                  <VisibilityIcon sx={{ color: "white",fontSize:"20px" }} />
                 </Avatar>
               }
-              label="2 viewed"
-              variant="outlined"
+              label={`${data?.viewedCandidates.length} viewed`}
+              // variant="outlined"
               sx={{ width: "130px" }}
             />
             <Chip
               className={styles.icons}
+              size="small"
               avatar={
-                <Avatar sx={{ backgroundColor: "lawngreen" }}>
-                  <PeopleOutlineIcon sx={{ color: "white" }} />
+                <Avatar sx={{ backgroundColor: "#eeeeee" }}>
+                  <PeopleOutlineIcon sx={{ color: "white",fontSize:"20px"  }} />
                 </Avatar>
               }
-              label="10 applied"
-              variant="outlined"
+              label={`${data?.candidatesApplied.length} applied`}
+              // variant="outlined"
               sx={{ width: "130px" }}
             />
             <Chip
               className={styles.icons}
+              size="small"
               avatar={
-                <Avatar sx={{ backgroundColor: "lawngreen" }}>
-                  <HomeWorkIcon sx={{ color: "white" }} />
+                <Avatar sx={{ backgroundColor: "#eeeeee" }}>
+                  <HomeWorkIcon sx={{ color: "white" ,fontSize:"20px" }} />
                 </Avatar>
               }
               label={data.condition}
-              variant="outlined"
+              // variant="outlined"
               sx={{ width: "130px" }}
             />
           </div>
         </div>
-        <div>
+        <div style={{display:"flex",flexFlow:"row nowrape", justifyContent:"space-between"}}>
           <Chip
             label="edit"
             variant="outlined"
             clickable
+            size="small"
             sx={{ width: "130px",backgroundColor:"lawngreen",color:"white","&:hover":{
               color:"GrayText"
             } }}
@@ -225,6 +236,9 @@ export default function JobPreview() {
               router.push(`/recruiter/vaccancy/edit/${router.query.jobId}`)
             }
           />
+          <Typography variant="body2" color="GrayText" component="div">
+              posted ,{dayjs(data.dateUpdated).fromNow()}
+            </Typography>
         </div>
       </div>
     </div>

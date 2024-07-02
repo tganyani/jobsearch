@@ -31,6 +31,11 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 import ArrowOutwardIcon from "@mui/icons-material/ArrowOutward";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import CircularProgress from "@mui/material/CircularProgress";
+import dayjs from "dayjs";
+import { io } from "socket.io-client";
+
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 
 import axios from "axios";
 
@@ -59,6 +64,8 @@ function stringToColor(string: string) {
 
   return color;
 }
+
+const socket = io(`${baseUrl}`);
 
 export default function AllVaccancy() {
   const matches = useMediaQuery("(max-width:700px)");
@@ -221,10 +228,23 @@ export default function AllVaccancy() {
         }
       });
     await setLoading(false);
+    await socket.emit("newJob");
   };
 
   if (error) return <div>Failed to load</div>;
-  if (!data) return <div>Loading...</div>;
+  if (!data)
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "center",
+          marginTop: "70px",
+        }}
+      >
+        <CircularProgress sx={{ color: "lawngreen" }} size="20px" />
+      </div>
+    );
   return (
     <div className={styles.container}>
       <Typography variant="h6" component="div">
@@ -368,24 +388,45 @@ export default function AllVaccancy() {
           >
             {item.description}
           </Typography>
-          <Button
-            sx={{
-              fontWeight: "300",
-              boxShadow: 0,
-              textTransform: "lowercase",
-              padding: "1px",
-              color: "lawngreen",
-              width: "100px",
+          <div
+            style={{
+              display: "flex",
+              flexFlow: "row nowrap",
+              justifyContent: "space-between",
             }}
-            onClick={() =>
-              router.push(`/recruiter/vaccancy/preview/${item.id}`)
-            }
           >
-            read more ...
-          </Button>
+            <Button
+              sx={{
+                fontWeight: "300",
+                boxShadow: 0,
+                textTransform: "lowercase",
+                padding: "1px",
+                color: "lawngreen",
+                width: "100px",
+              }}
+              onClick={() =>
+                router.push(`/recruiter/vaccancy/preview/${item.id}`)
+              }
+            >
+              read more ...
+            </Button>
+            <Typography
+              // color="text.secondary"
+              variant="body2"
+              component="div"
+            >
+              posted {dayjs(item.dateUpdated).fromNow()}
+            </Typography>
+          </div>
+
           <div className={styles.bottom}>
             <div className={styles.clm1}>
               <Chip
+                onClick={
+                  item.candidatesApplied.length > 0
+                    ? () => router.push(`/recruiter/vaccancy/${item.id}`)
+                    : () => router.push("/recruiter/vaccancy/allVaccancies")
+                }
                 avatar={
                   <Avatar sx={{ backgroundColor: "lawngreen" }}>
                     <Typography
@@ -450,12 +491,11 @@ export default function AllVaccancy() {
       <Dialog
         open={open}
         onClose={handleCloseDeleteModal}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
+        
       >
-        <DialogTitle id="alert-dialog-title">delete vaccancy</DialogTitle>
+        <DialogTitle >delete vaccancy</DialogTitle>
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
+          <DialogContentText >
             Are you sure you want to delete{" "}
             <span style={{ fontWeight: "600" }}>{jobTitle}</span>?
           </DialogContentText>

@@ -4,12 +4,14 @@ import { RootState } from "@/store/store";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
 import { setSession, removeSession } from "@/store/slice/sessionSlice";
-import useSWR,{useSWRConfig} from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import styles from "../styles/ChatsLayout.module.scss";
 import { io } from "socket.io-client";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import DoneIcon from "@mui/icons-material/Done";
+import CircularProgress from "@mui/material/CircularProgress";
 
+import { setRefreshMessage } from "@/store/slice/refreshNewMsgSlice";
 import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import calendar from "dayjs/plugin/calendar";
@@ -19,7 +21,6 @@ import { Typography } from "@mui/material";
 import Avatar from "@mui/material/Avatar";
 dayjs.extend(calendar);
 dayjs.extend(localizedFormat);
-
 
 const socket = io(`${baseUrl}`);
 
@@ -44,18 +45,31 @@ export function stringToColor(string: string) {
   return color;
 }
 
-
 export default function NestedLayoutCandidateChats({ children }: any) {
-  const router = useRouter()
+  const router = useRouter();
   const accountType = useSelector(
     (state: RootState) => state.account.accountType
   );
-  const dispatch = useDispatch()
-  const refreshNewMsg = useSelector((state:RootState)=>state.refreshNewMsg.refreshNewMessage)
+  const dispatch = useDispatch();
+  const refreshNewMsg = useSelector(
+    (state: RootState) => state.refreshNewMsg.refreshNewMessage
+  );
 
   const { mutate } = useSWRConfig();
   const [refreshOnline, setRefreshOnline] = useState("");
   const user = useSelector((state: RootState) => state.session);
+  useEffect(()=>{
+    const sendAllCandidateRooms = ()=>{
+      socket.emit("allRooms",{id:user.id,accountType})
+    }
+    sendAllCandidateRooms()
+  },[socket])
+  useEffect(()=>{
+    socket.on("roomMsg", (data) => {
+      dispatch(setRefreshMessage(data))
+      
+    });
+  },[socket])
   useEffect(() => {
     socket.on("onlineUser", (data) => {
       setRefreshOnline(data);
@@ -63,34 +77,61 @@ export default function NestedLayoutCandidateChats({ children }: any) {
   }, [socket]);
 
   useEffect(() => {
-    mutate([`${baseUrl}/rooms/candidate/${user.id}`,user.access_token,user.refresh_token]);
+    mutate([
+      `${baseUrl}/rooms/candidate/${user.id}`,
+      user.access_token,
+      user.refresh_token,
+    ]);
   }, [refreshOnline]);
-
-  useEffect(()=>{
-    mutate([`${baseUrl}/rooms/candidate/${user.id}`,user.access_token,user.refresh_token])
-  },[refreshNewMsg])
-
+  useEffect(() => {
+    mutate([
+      `${baseUrl}/rooms/candidate/${user.id}`,
+      user.access_token,
+      user.refresh_token,
+    ]);
+  }, [refreshNewMsg]);
 
   // const { data, error } = useSWR(`${baseUrl}/rooms/candidate/${id}`, fetcher);
-  const { data, error } = useSWR([`${baseUrl}/rooms/candidate/${user.id}`,user.access_token,user.refresh_token],async ([url,access_token,refresh_token])=>
-    await axios.get(url,{ headers: { Authorization: "Bearer " + access_token } })
-    .then(res=>res.data)
-    .catch(async err=>{
-      if(err.request.status === 401){
-        await axios.post(`${baseUrl}/candidates/refresh`,{refresh_token})
-        .then(res=>{
-          dispatch(setSession({...user,access_token:res.data.access_token}))
-          if(!res.data.valid_access_token){
-            dispatch(removeSession())
-            router.push("/auth/signin")
+  const { data, error } = useSWR(
+    [
+      `${baseUrl}/rooms/candidate/${user.id}`,
+      user.access_token,
+      user.refresh_token,
+    ],
+    async ([url, access_token, refresh_token]) =>
+      await axios
+        .get(url, { headers: { Authorization: "Bearer " + access_token } })
+        .then((res) => res.data)
+        .catch(async (err) => {
+          if (err.request.status === 401) {
+            await axios
+              .post(`${baseUrl}/candidates/refresh`, { refresh_token })
+              .then((res) => {
+                dispatch(
+                  setSession({ ...user, access_token: res.data.access_token })
+                );
+                if (!res.data.valid_access_token) {
+                  dispatch(removeSession());
+                  router.push("/auth/signin");
+                }
+              });
           }
         })
-      }
-    })
   );
 
   if (error) return <div>Failed to load</div>;
-  if (!data) return <div>Loading...</div>;
+  if (!data) return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "center",
+        marginTop: "70px",
+      }}
+    >
+      <CircularProgress sx={{ color: "lawngreen" }} size="20px" />
+    </div>
+  );
   return (
     <div className={styles.container}>
       <div className={styles.chatList}>
@@ -101,9 +142,9 @@ export default function NestedLayoutCandidateChats({ children }: any) {
             className={styles.List}
           >
             <div style={{ position: "relative" }}>
-            {item.recruiter.online && (
+              {item.recruiter.online && (
                 <div
-                className={styles.onlineIndicator}
+                  className={styles.onlineIndicator}
                   style={{
                     position: "absolute",
                     bottom: "3px",
@@ -111,7 +152,6 @@ export default function NestedLayoutCandidateChats({ children }: any) {
                     backgroundColor: "lawngreen",
                     height: "8px",
                     width: "8px",
-                    borderRadius: "4px",
                     zIndex: "3",
                   }}
                 ></div>
@@ -132,7 +172,7 @@ export default function NestedLayoutCandidateChats({ children }: any) {
               )}
             </div>
             <div className={styles.text}>
-            <div
+              <div
                 style={{
                   display: "flex",
                   flexFlow: "row nowrap",
@@ -199,30 +239,35 @@ export default function NestedLayoutCandidateChats({ children }: any) {
                         />
                       )}
                   </p>
-                  {
-                    (item?.chats.filter((chat:any)=>(chat.read === false && chat.accountType!==accountType)).length>0)&&<div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      flexFlow: "row nowrap",
-                      backgroundColor: "lawngreen",
-                      width: "30px",
-                      height: "30px",
-                      borderRadius: "15px",
-                      color: "white",
-                      whiteSpace: "nowrap",
-                      textOverflow: "ellipsis",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {
-                      item?.chats.filter((chat:any)=>chat.read === false&& chat.accountType!==accountType).length
-                    }
-                    
-                  </div>
-                  }
-                  
+                  {item?.chats.filter(
+                    (chat: any) =>
+                      chat.read === false && chat.accountType !== accountType
+                  ).length > 0 && (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        flexFlow: "row nowrap",
+                        backgroundColor: "lawngreen",
+                        width: "30px",
+                        height: "30px",
+                        borderRadius: "15px",
+                        color: "white",
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {
+                        item?.chats.filter(
+                          (chat: any) =>
+                            chat.read === false &&
+                            chat.accountType !== accountType
+                        ).length
+                      }
+                    </div>
+                  )}
                 </span>
               </div>
             </div>

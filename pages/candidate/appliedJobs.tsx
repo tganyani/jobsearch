@@ -9,8 +9,13 @@ import styles from "../../styles/AppliedJobs.module.scss";
 import Chip from "@mui/material/Chip";
 import axios from "axios";
 import { Typography } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
 
-const chipStyles = { color: "white",backgroundColor:"lawngreen" ,"&:hover":{opacity:"0.6"}}
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
+
+const chipStyles = { color: "white", backgroundColor: "lawngreen" };
 
 export default function AppliedJobs() {
   const router = useRouter();
@@ -45,18 +50,31 @@ export default function AppliedJobs() {
   );
 
   if (error) return <div>Failed to load</div>;
-  if (!data) return <div>Loading...</div>;
+  if (!data)
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "center",
+          marginTop: "70px",
+        }}
+      >
+        <CircularProgress sx={{ color: "lawngreen" }} size="20px" />
+      </div>
+    );
   return (
     <div className={styles.container}>
       <Typography variant="h6" component="h6" className={styles.header}>
-          applied jobs
-        </Typography>
+        applied jobs
+      </Typography>
       {data?.jobsApplied.map((item: any) => (
         <div key={item.id} className={styles.job}>
           <div className={styles.header}>
             <Typography variant="body1" component="div">
               {item.title}
             </Typography>
+           
             {data?.refused?.jobsRefused.filter(
               (it: any) => it.id === item.id
             )[0] && <Chip sx={{ color: "red" }} label="not ready to invite" />}
@@ -64,7 +82,7 @@ export default function AppliedJobs() {
               (it: any) => it.id === item.id
             )[0] && (
               <Chip
-                sx={{ color: "lawngreen" , fontFamily: "Arial"}}
+                sx={{ color: "lawngreen", fontFamily: "Arial" }}
                 label="invited, start conversation"
                 onClick={() =>
                   router.push(`/candidate/chats/${item.recruiter.id}`)
@@ -86,23 +104,37 @@ export default function AppliedJobs() {
           >
             {item.description}
           </Typography>
-          <div>
+          <div style={{display:"flex",flexFlow:"row nowrap",justifyContent:"space-between"}}>
             <Button
               sx={{
                 fontWeight: "300",
                 boxShadow: 0,
                 textTransform: "lowercase",
                 padding: "1px",
-                color:"lawngreen"
+                color: "lawngreen",
               }}
               onClick={() => router.push(`/${item.id}`)}
             >
               read more
             </Button>
+            <Typography
+              color="text.secondary"
+              variant="body2"
+              component="div"
+              className={styles.date}
+            >
+              posted {dayjs(item.dateUpdated).fromNow()}
+            </Typography>
           </div>
           <div className={styles.footer}>
-            <Chip sx={chipStyles} label="23 viewed" />
-            <Chip sx={chipStyles} label="12 applied" />
+            <Chip
+              sx={chipStyles}
+              label={`${item?.viewedCandidates.length} viewed`}
+            />
+            <Chip
+              sx={chipStyles}
+              label={`${item?.candidatesApplied.length} applied`}
+            />
           </div>
         </div>
       ))}

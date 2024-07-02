@@ -9,6 +9,7 @@
     flex-flow: column nowrap;
     align-items: center;
     row-gap: 10px;
+    // background-color: red;
     .inputs {
       row-gap: 10px;
       display: flex;
@@ -21,7 +22,7 @@
     }
   }
   .jobs {
-    flex: 2;
+    flex: 3;
     height: 80vh;
     overflow-y: scroll;
     display: flex;

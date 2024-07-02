@@ -23,6 +23,7 @@ import localizedFormat from "dayjs/plugin/localizedFormat";
 import calendar from "dayjs/plugin/calendar";
 import axios from "axios";
 import { Typography } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
 
 
 dayjs.extend(calendar);
@@ -46,6 +47,7 @@ const Chat: NextPageWithLayout = () => {
   const [unSendMsg, setUnsendMsg] = useState<{ msg: string; date: string }[]>(
     []
   );
+  const [height, setHeight] = useState(window.innerHeight);
   const user = useSelector((state: RootState) => state.session);
   const scrollMessage = useRef<null | HTMLDivElement>(null);
   const router = useRouter();
@@ -146,9 +148,28 @@ const Chat: NextPageWithLayout = () => {
     await setMessage("");
   };
 
+  useEffect(() => {
+    const updateDimensions = () => {
+      setHeight(window.innerHeight);
+  }
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
+}, []);
+
   if (error) return <div>Failed to load</div>;
-  if (!data) return <div>Loading...</div>;
-  console.log(data);
+  if (!data) return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "center",
+        marginTop: "70px",
+      }}
+      className={styles.main}
+    >
+      <CircularProgress sx={{ color: "lawngreen" }} size="20px" />
+    </div>
+  );
   return (
     <div className={styles.main}>
       {typing}
@@ -182,7 +203,7 @@ const Chat: NextPageWithLayout = () => {
           </Typography>
         )}
       </div>
-      <div className={styles.chatBox}>
+      <div className={styles.chatBox} style={{height:`${height - 170}px`}}>
         {data?.chats.map((item: any, i: number) => (
           <div key={item.id}>
             <div

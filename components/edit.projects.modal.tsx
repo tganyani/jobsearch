@@ -46,8 +46,9 @@ export default function EditProjects({
   const [files, setFiles] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [loading1, setLoading1] = useState<boolean>(false);
-  const [preViewFiles, setPreViewFiles] = useState<image[]>([]);
+  const [preViewFiles, setPreViewFiles] = useState<image[]|any[]>([]);
   const [initialImages, setInitialImages] = useState<image[]>([]);
+  const [cancelMode, setCancelMode] = useState<boolean>(false);
   const { mutate } = useSWRConfig();
   const open = useSelector((state: RootState) => state.modal.openProject);
   const user = useSelector((state: RootState) => state.session);
@@ -65,9 +66,12 @@ export default function EditProjects({
       setFiles([...event.target.files]);
     }
   };
-  const handleCancelImage = async (id: string | number) => {
+  const handleCancelImage = async (id: string | number,removedName:string|any="") => {
+    setCancelMode(true)
     setPreViewFiles(preViewFiles.filter((file) => file.id !== id));
     setInitialImages(initialImages.filter((file) => file.id !== id));
+    setFiles(files.filter((file) => file.name !== removedName))
+    setTimeout(()=>setCancelMode(false),1000)
   };
 
   const handleDeleteProject = async () => {
@@ -228,16 +232,21 @@ export default function EditProjects({
   }, [open]);
   useEffect(() => {
     const filePreView = () => {
-      const tempUploads = files.map((file: any) => ({
-        id: uuidv4(),
-        url: URL.createObjectURL(file),
-      }));
-      editMode
-        ? setPreViewFiles([...preViewFiles, ...tempUploads])
-        : setPreViewFiles([...tempUploads]);
+      if(!cancelMode){
+        const tempUploads = files.map((file: any) => ({
+          id: uuidv4(),
+          url: URL.createObjectURL(file),
+          name:file.name
+        }));
+        editMode
+          ? setPreViewFiles([...preViewFiles, ...tempUploads])
+          : setPreViewFiles([...tempUploads]);
+      }
     };
     filePreView();
   }, [files]);
+
+
   return (
     <Dialog
       open={open}
@@ -320,7 +329,7 @@ export default function EditProjects({
                     >
                       <ClearIcon
                         style={{ fontSize: "20px", color: "white" }}
-                        onClick={() => handleCancelImage(file.id)}
+                        onClick={() => handleCancelImage(file.id,file.name?file.name:"")}
                       />
                     </div>
                   </div>

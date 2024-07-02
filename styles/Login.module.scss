@@ -5,14 +5,35 @@
   align-items: center;
   height: 80vh;
   .sub {
+    .top1 {
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
+      justify-content: center;
+    }
+    .top {
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
+    }
     display: flex;
     flex-flow: column nowrap;
     justify-content: center;
-    row-gap: 30px;
-    border: 1px solid rgb(203, 193, 193) ;
+    row-gap: 20px;
+    box-shadow: 0 0 1px grey;
+    border-radius: 20px;
     padding: 30px;
-    &:hover{
-        border-color: grey;
+    // &:hover {
+    //   border-color: grey;
+    // }
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .container{
+    .sub{
+      padding: 5%;
     }
   }
+
 }

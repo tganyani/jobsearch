@@ -2,7 +2,7 @@ import { useSWRConfig } from "swr";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { RootState } from "@/store/store";
 
@@ -14,6 +14,7 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import useSWR from "swr";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import HomeWorkIcon from "@mui/icons-material/HomeWork";
+import CircularProgress from "@mui/material/CircularProgress";
 
 import { baseUrl } from "@/baseUrl";
 import JobApply from "@/components/job.apply.modal";
@@ -27,17 +28,81 @@ import Pagination from "@mui/material/Pagination";
 import axios from "axios";
 import { removeSession, setSession } from "@/store/slice/sessionSlice";
 import { Typography } from "@mui/material";
+import { io } from "socket.io-client";
+import { MyRipple } from "..";
+
+const socket = io(`${baseUrl}`);
 
 export default function LikedJobs() {
   const { mutate } = useSWRConfig();
   const [jobId, setJobId] = useState<number | any>();
   const [page, setPage] = useState<number>(1);
+  const [refreshNewJobs, setRefreshNewJobs] = useState("");
+  const [refreshNewView, setRefreshNewView] = useState("");
+  const [jobTitle, setJobTitle] = useState<string>("");
   const [recruiter, setRecruiter] = useState<
     { id: number; email: string } | any
   >();
   const dispatch = useDispatch();
   const router = useRouter();
   const user = useSelector((state: RootState) => state.session);
+
+  useEffect(() => {
+    socket.on("refreshJobs", (data) => {
+      setRefreshNewJobs(data);
+    });
+    socket.on("refreshNewView", (data) => {
+      setRefreshNewView(data);
+    });
+  }, [socket]);
+
+  useEffect(() => {
+    mutate([
+      `${baseUrl}/vaccancy/liked/${user.id}`,
+      user.access_token,
+      user.refresh_token,
+    ]);
+  }, [refreshNewJobs]);
+  // refresh on new view
+  useEffect(() => {
+    mutate([
+      `${baseUrl}/vaccancy/liked/${user.id}`,
+      user.access_token,
+      user.refresh_token,
+    ]);
+  }, [refreshNewView]);
+
+  const handleClickReadMore = async (jobId: number) => {
+    await router.push(`/${jobId}`);
+    await axios
+      .patch(
+        `${baseUrl}/vaccancy/view/${user.id}`,
+        { id: jobId },
+        {
+          headers: { Authorization: "Bearer " + user.access_token },
+        }
+      )
+      .then((res) => {})
+      .catch(async (err) => {
+        if (err.request.status === 401) {
+          await axios
+            .post(`${baseUrl}/candidates/refresh`, {
+              refresh_token: user.refresh_token,
+            })
+            .then((res) => {
+              dispatch(
+                setSession({ ...user, access_token: res.data.access_token })
+              );
+              if (!res.data.valid_access_token) {
+                dispatch(removeSession());
+                router.push("/auth/signin");
+              }
+            });
+        }
+      });
+    await socket.emit("newView", { candidateId: user.id });
+  };
+
   const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
     setPage(value);
   };
@@ -103,10 +168,27 @@ export default function LikedJobs() {
   );
 
   if (error) return <div>Failed to load</div>;
-  if (!data) return <div>Loading...</div>;
+  if (!data) return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "center",
+        marginTop: "70px",
+      }}
+    >
+      <CircularProgress sx={{ color: "lawngreen" }} size="20px" />
+    </div>
+  )
   return (
     <div className={styles.container}>
-      <JobApply jobId={jobId} recruiter={recruiter} />
+      <JobApply
+        jobId={jobId}
+        jobTitle={jobTitle}
+        firstName={user.firstName}
+        lastName={user.lastName}
+        recruiter={recruiter}
+      />
       <div className={styles.jobs}>
         <Typography variant="h6" component="h6" className={styles.header}>
           liked jobs
@@ -142,7 +224,7 @@ export default function LikedJobs() {
                         component="div"
                         sx={{ fontSize: "12px" }}
                       >
-                        2
+                        {job?.viewedCandidates.length}
                       </Typography>
                     </div>
                     <div className={styles.applicants}>
@@ -172,7 +254,7 @@ export default function LikedJobs() {
                 </Typography>
                 <ul className={styles.skills}>
                   <Typography
-                    color="text.secondary"
+                    color="text.primary"
                     variant="body2"
                     component="div"
                     className={styles.skillsH}
@@ -201,7 +283,7 @@ export default function LikedJobs() {
                   padding: "1px",
                   color: "lawngreen",
                 }}
-                onClick={() => router.push(`/${job.id}`)}
+                onClick={() => handleClickReadMore(Number(job.id))}
               >
                 read more ...
               </Button>
@@ -262,6 +344,7 @@ export default function LikedJobs() {
                       setJobId(job.id);
                       dispatch(setOpenApply());
                       setRecruiter(job.recruiter);
+                      setJobTitle(job.title);
                     }}
                     sx={{
                       fontWeight: "300",
@@ -270,21 +353,30 @@ export default function LikedJobs() {
                       backgroundColor: "lawngreen",
                     }}
                     disabled={
-                      job?.candidatesApplied[0]?.jobsApplied.filter(
-                        (it: any) => Number(it.id) === Number(job.id)
-                      ).length
+                      job?.candidatesApplied
+                        .filter(
+                          (it: any) => Number(it.id) === Number(user.id)
+                        )[0]
+                        ?.jobsApplied.filter(
+                          (it: any) => Number(it.id) === Number(job.id)
+                        ).length
                     }
                   >
-                    {job?.candidatesApplied[0]?.jobsApplied.filter(
-                      (it: any) => Number(it.id) === Number(job.id)
-                    ).length
+                    {job?.candidatesApplied
+                      .filter((it: any) => Number(it.id) === Number(user.id))[0]
+                      ?.jobsApplied.filter(
+                        (it: any) => Number(it.id) === Number(job.id)
+                      ).length
                       ? "Applied"
                       : "Apply"}
                   </Button>
-                  <FavoriteBorderIcon
-                    className={styles.liked}
-                    onClick={() => handleDislike(job.id)}
-                  />
+
+                  <MyRipple>
+                    <FavoriteBorderIcon
+                      className={styles.liked}
+                      onClick={() => handleDislike(job.id)}
+                    />
+                  </MyRipple>
                 </div>
               </div>
             </div>

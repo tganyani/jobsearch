@@ -12,6 +12,7 @@ import Chip from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import { io } from "socket.io-client";
 import { RootState } from "@/store/store";
+import { Typography } from "@mui/material";
 
 const socket = io(`${baseUrl}`);
 
@@ -22,6 +23,9 @@ export default function Applicants() {
   const [currentLoading, setCurrentLoading] = useState<number>();
   const [loadingAccept, setLoadingAccept] = useState<boolean>(false);
   const user = useSelector((state: RootState) => state.session);
+  const accountType = useSelector(
+    (state: RootState) => state.account.accountType
+  );
   const dispatch = useDispatch();
   const vaccancyId = router.query.vaccancyId;
 
@@ -72,7 +76,9 @@ export default function Applicants() {
     firstName: string | any,
     companyName: string | any,
     fName: string | any,
-    lName: string | any
+    lName: string | any,
+    roomId: number | any,
+    roomName: string | any
   ) => {
     setCurrentLoading(Number(candidateId));
     setLoadingAccept(true);
@@ -114,6 +120,16 @@ export default function Applicants() {
       companyName,
       fName,
       lName,
+      vaccancyId,
+      roomId,
+      jobTitle: data?.title,
+      candidateId,
+    });
+    await socket.emit("newMsg", {
+      message: `You have recieved an  initation from ${companyName}, view more details about the job at https://jobsearch-lemon.vercel.app/${vaccancyId}  .Start conversation https://jobsearch-lemon.vercel.app/candidate/chats/${roomId} . With all respect ${fName} ${lName} `,
+      roomId,
+      roomName,
+      accountType,
     });
     setLoadingAccept(false);
   };
@@ -123,7 +139,9 @@ export default function Applicants() {
     firstName: string | any,
     companyName: string | any,
     fName: string | any,
-    lName: string | any
+    lName: string | any,
+    roomName: string | any,
+    roomId: number | any
   ) => {
     setCurrentLoading(Number(candidateId));
     setLoading(true);
@@ -164,13 +182,25 @@ export default function Applicants() {
       companyName,
       fName,
       lName,
+      vaccancyId,
+      roomId,
+      jobTitle: data?.title,
+      candidateId,
+    });
+    await socket.emit("newMsg", {
+      message: `For now we are not ready to invite you at ${companyName} for this postion  https://jobsearch-lemon.vercel.app/${vaccancyId} , we have carefully viewed your profile, but this should not stop you from applying when we post new vaccancies . With all  respect ${fName} ${lName} `,
+      roomId,
+      roomName,
+      accountType,
     });
     setLoading(false);
   };
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        candidates who have applied for a <span>{data.title}</span> position
+        <Typography variant="body1" color="GrayText" component="div">
+          candidates who have applied for a <span>{data.title}</span> position
+        </Typography>
       </div>
       <div className={styles.applicants}>
         {data?.candidatesApplied.map((item: any) => (
@@ -180,14 +210,16 @@ export default function Applicants() {
                 display: "flex",
                 flexFlow: "row nowrap",
                 columnGap: "20px",
+                justifyContent: "space-between",
               }}
             >
-              <h5>
+              <Typography variant="body1" component="div">
+                {" "}
                 {item.lastName} {item.firstName}
-              </h5>
+              </Typography>
               <Chip
                 label="start conversation"
-                sx={{ color: "lawngreen" }}
+                sx={{ color: "limegreen" }}
                 onClick={() =>
                   router.push(
                     `/recruiter/chats/${
@@ -200,7 +232,19 @@ export default function Applicants() {
               />
             </div>
             <div className={styles.name}>
-              <p>{item?.letter[0]?.message}</p>
+              <Typography
+                variant="body2"
+                color="GrayText"
+                component="div"
+                sx={{
+                  whiteSpace: "nowrap",
+                  // maxWidth: "150px",
+                  textOverflow: "ellipsis",
+                  overflow: "hidden",
+                }}
+              >
+                {item?.about}
+              </Typography>
               <Link href={`/recruiter/vaccancy/${vaccancyId}/${item.id}`}>
                 <p>view profile</p>
               </Link>
@@ -223,7 +267,13 @@ export default function Applicants() {
                     item?.telegram?.firstName,
                     data?.companyName,
                     data?.recruiter?.firstName,
-                    data?.recruiter?.lastName
+                    data?.recruiter?.lastName,
+                    data?.recruiter?.rooms?.filter(
+                      (room: any) => room.candidateId === item.id
+                    )[0].id,
+                    data?.recruiter?.rooms?.filter(
+                      (room: any) => room.candidateId === item.id
+                    )[0].name
                   )
                 }
                 disabled={
@@ -232,11 +282,15 @@ export default function Applicants() {
                   ).length
                 }
               >
-                {item?.accepted?.jobsAccepted.filter(
-                  (it: any) => Number(it.id) === Number(vaccancyId)
-                ).length
-                  ? "invited"
-                  : "invite"}
+                {loadingAccept && Number(item.id) === currentLoading ? (
+                  <CircularProgress size="20px" sx={{ color: "white" }} />
+                ) : item?.accepted?.jobsAccepted.filter(
+                    (it: any) => Number(it.id) === Number(vaccancyId)
+                  ).length ? (
+                  "invited"
+                ) : (
+                  "invite"
+                )}
               </Button>
               <Button
                 color="error"
@@ -255,7 +309,13 @@ export default function Applicants() {
                     item?.telegram?.firstName,
                     data?.companyName,
                     data?.recruiter?.firstName,
-                    data?.recruiter?.lastName
+                    data?.recruiter?.lastName,
+                    data?.recruiter?.rooms?.filter(
+                      (room: any) => room.candidateId === item.id
+                    )[0].name,
+                    data?.recruiter?.rooms?.filter(
+                      (room: any) => room.candidateId === item.id
+                    )[0].id
                   )
                 }
                 disabled={
@@ -264,14 +324,16 @@ export default function Applicants() {
                   ).length > 0
                 }
               >
-                not ready
+                {loading && Number(item.id) === currentLoading ? (
+                  <CircularProgress size="20px" sx={{ color: "white" }} />
+                ) : item?.refused?.jobsRefused.filter(
+                    (it: any) => Number(it.id) === Number(vaccancyId)
+                  ).length ? (
+                  "refused"
+                ) : (
+                  " not ready"
+                )}
               </Button>
-              {loading && Number(item.id) === currentLoading && (
-                <CircularProgress color="error" />
-              )}
-              {loadingAccept && Number(item.id) === currentLoading && (
-                <CircularProgress color="success" />
-              )}
             </div>
           </div>
         ))}

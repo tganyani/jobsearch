@@ -41,6 +41,7 @@ import Carousel from "react-material-ui-carousel";
 import { Typography } from "@mui/material";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import InsertPhotoIcon from "@mui/icons-material/InsertPhoto";
+import CircularProgress from "@mui/material/CircularProgress";
 
 // const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -100,7 +101,18 @@ export default function CandidateProfile() {
         })
   );
   if (error) return <div>Failed to load</div>;
-  if (!data) return <div>Loading...</div>;
+  if (!data) return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "center",
+        marginTop: "70px",
+      }}
+    >
+      <CircularProgress sx={{ color: "lawngreen" }} size="20px" />
+    </div>
+  )
   return (
     <div className={styles.container}>
       <div className={styles.topNav}>

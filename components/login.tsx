@@ -5,13 +5,17 @@ import styles from "../styles/Login.module.scss";
 import { useForm, SubmitHandler } from "react-hook-form";
 import axios from "axios";
 import { useRouter } from "next/router";
+import { Typography } from "@mui/material";
+import CircularProgress from "@mui/material/CircularProgress";
+import LockIcon from '@mui/icons-material/Lock';
 
 import { useDispatch, useSelector } from "react-redux";
 import { setSession } from "@/store/slice/sessionSlice";
 import { RootState } from "@/store/store";
 import { baseUrl } from "@/baseUrl";
 import { io } from "socket.io-client";
-import Cookies from 'js-cookie'
+import Cookies from "js-cookie";
+import { setAccountType } from "@/store/slice/accountSlice";
 
 const socket = io(`${baseUrl}`);
 
@@ -21,6 +25,7 @@ type Inputs = {
 };
 
 export default function Login() {
+  const [loading, setLoading] = useState<Boolean|any>(false);
   const router = useRouter();
   const dispatch = useDispatch();
   const accountType = useSelector(
@@ -34,26 +39,30 @@ export default function Login() {
     formState: { errors },
   } = useForm<Inputs>();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
+    setLoading(true)
     await axios.post(`${baseUrl}/${accountType}s/login`, data).then((res) => {
       console.log(res.data);
       if (res.data.logged) {
-        Cookies.set('user',res.data.email ) //setting the cookie
-        Cookies.set('accountType',accountType )
+        Cookies.set("user", res.data.email); //setting the cookie
+        Cookies.set("accountType", accountType);
         dispatch(
           setSession({
             email: res.data.email,
             access_token: res.data.access_token,
             id: res.data.id,
-            position:res.data.position,
-            refresh_token:res.data.refresh_token
+            position: res.data.position,
+            city: res.data?.city,
+            country: res.data?.country,
+            refresh_token: res.data.refresh_token,
+            firstName:res.data.firstName,
+            lastName:res.data.lastName,
           })
         );
         socket.emit("online", { id: res.data.id, accountType });
         // redirecting depending on the account type
-        if(accountType === "candidate"){
+        if (accountType === "candidate") {
           router.push("/");
-        }
-        else{
+        } else {
           router.push("/recruiter/vaccancy/allVaccancies");
         }
       }
@@ -61,13 +70,29 @@ export default function Login() {
         setErrorMsg(res.data.message);
       }
     });
+    setLoading(false)
   };
 
   return (
     <div className={styles.container}>
+      
       <div className={styles.sub}>
-        <h5 style={{ textAlign: "center" }}>logging as a {accountType}</h5>
-        <p style={{ color: "red" }}>{errorMsg}</p>
+      <div className={styles.top1}>
+        <LockIcon sx={{color:"limegreen"}}/>
+      </div>
+        <div className={styles.top}>
+        <Typography component="div" variant="body2" style={{ textAlign: "center" }}>login as a {accountType}?</Typography>
+        <Button
+            style={{ height: "40px", textTransform: "lowercase",color:"limegreen" }}
+            size="small"
+            onClick={accountType==="candidate"?()=>dispatch(setAccountType("recruiter")):()=>dispatch(setAccountType("candidate"))}
+          >
+            {accountType==="candidate"?"recruiter":"candidate"}
+          </Button>
+        </div>
+        <Typography component="span" variant="body2" style={{ color: "tomato" }}>
+        {errorMsg}
+        </Typography>
         <TextField
           type="text"
           id="standard-basic"
@@ -76,7 +101,7 @@ export default function Login() {
           {...register("email", { required: true })}
         />
         {errors.email && (
-          <span style={{ color: "red" }}>This field is required</span>
+          <span style={{ color: "tomato" }}>This field is required</span>
         )}
         <TextField
           id="standard-basic"
@@ -86,24 +111,25 @@ export default function Login() {
           {...register("password", { required: true })}
         />
         {errors.password && (
-          <span style={{ color: "red" }}>This field is required</span>
+          <span style={{ color: "tomato" }}>This field is required</span>
         )}
         <Button
           variant="contained"
-          style={{ height: "40px", textTransform: "lowercase" }}
+          sx={{ height: "40px", textTransform: "lowercase",backgroundColor:"limegreen" ,boxShadow: 0,"&:hover":{backgroundColor:"limegreen"}}}
           onClick={handleSubmit(onSubmit)}
+          disabled={loading}
         >
-          login
+          {loading?<CircularProgress size="20px" sx={{color:"white"}}/>:"login"}
         </Button>
-        <p>
+        <Typography component="div" variant="body2" >
           Don't have account?
           <Button
-            style={{ height: "40px", textTransform: "lowercase" }}
+            sx={{ height: "40px", textTransform: "lowercase",color:"limegreen" }}
             onClick={() => router.push("/auth/signup")}
           >
             sign up
           </Button>
-        </p>
+        </Typography>
       </div>
     </div>
   );

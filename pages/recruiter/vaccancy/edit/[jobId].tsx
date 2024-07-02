@@ -13,6 +13,8 @@ import { io } from "socket.io-client";
 import { RootState } from "@/store/store";
 import { setSession,removeSession } from "@/store/slice/sessionSlice";
 
+import { jobFields } from "..";
+
 const socket = io(`${baseUrl}`);
 
 type Inputs = {
@@ -24,6 +26,7 @@ type Inputs = {
   description: string;
   condition: string;
   salary: number;
+  field: string;
 };
 
 interface Skill {
@@ -45,6 +48,7 @@ export default function EditVaccancy() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<Inputs>();
 
@@ -85,6 +89,7 @@ export default function EditVaccancy() {
         description: data?.description,
         condition: data?.condition,
         salary: data?.salary,
+        field:data?.field
     })
     setSkills(data?.skills?.data)
   },[data])
@@ -272,7 +277,6 @@ export default function EditVaccancy() {
             type="text"
             label="work condition"
             size="small"
-            defaultValue="office"
             sx={{ minWidth: 180 }}
             {...register("condition", { required: true })}
           >
@@ -293,6 +297,23 @@ export default function EditVaccancy() {
           )}
         </div>
         <div className={styles.submitBtn}>
+          <TextField
+            className={styles.text}
+            select
+            type="text"
+            label="job field or sector"
+            size="small"
+            // defaultValue="general"
+            sx={{ minWidth: 180 }}
+            {...register("field", { required: true })}
+          >
+            {jobFields.map((field: { id: number | any; title: string }) => (
+              <MenuItem id={field.id} value={field.title}>
+                {field.title}{" "}
+              </MenuItem>
+            ))}
+          </TextField>
+          
           <Button
             variant="contained"
             className={styles.text}

@@ -7,7 +7,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { setSession, removeSession } from "@/store/slice/sessionSlice";
 import useSWR, { useSWRConfig } from "swr";
 import styles from "../styles/RoomLayout.module.scss";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import CircularProgress from "@mui/material/CircularProgress";
 import { io } from "socket.io-client";
 
 import Avatar from "@mui/material/Avatar";
@@ -91,7 +91,18 @@ export default function NestedLayoutRecruiterRoom({ children }: any) {
   }, [refreshNewMsg]);
 
   if (error) return <div>Failed to load</div>;
-  if (!data) return <div>Loading...</div>;
+  if (!data) return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "center",
+        marginTop: "70px",
+      }}
+    >
+      <CircularProgress sx={{ color: "lawngreen" }} size="20px" />
+    </div>
+  );
   return (
     <div className={styles.container}>
       <div className={styles.chatList}>
@@ -116,7 +127,6 @@ export default function NestedLayoutRecruiterRoom({ children }: any) {
                     backgroundColor: "lawngreen",
                     height: "8px",
                     width: "8px",
-                    borderRadius: "4px",
                     zIndex: "3",
                   }}
                 ></div>
